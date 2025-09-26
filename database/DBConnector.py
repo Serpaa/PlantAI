@@ -42,9 +42,9 @@ class SQLiteDB(DBConnector):
             except sqlite3.OperationalError as msg:
                 print("Command skipped: ", msg)
 
-    def execute(self, query: str):
+    def execute(self, query: str, values: tuple = ()):
         self.connect()
-        self.cur.execute(query)
+        self.cur.execute(query, values)
         self.con.commit()
 
         # Return results if it's a SELECT query
