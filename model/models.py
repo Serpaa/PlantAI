@@ -1,5 +1,5 @@
 class plant:
-    def __init__(self, plant_id: int, name: str, species: int, sensor: int):
+    def __init__(self, name: str, species: int, sensor: int, plant_id: int = 0):
         self.plant_id = plant_id
         self.name = name
         self.species = species
