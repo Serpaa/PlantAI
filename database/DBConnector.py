@@ -1,6 +1,20 @@
+from abc import ABC, abstractmethod
 import sqlite3
 
-class SQLiteDB:
+class DBConnector(ABC):
+    @abstractmethod
+    def connect(self):
+        pass
+
+    @abstractmethod
+    def execute(self, query: str):
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+class SQLiteDB(DBConnector):
     def __init__(self, db_path: str):
         self.db_path = db_path
         con = None
@@ -27,6 +41,14 @@ class SQLiteDB:
                 self.cur.execute(command)
             except sqlite3.OperationalError as msg:
                 print("Command skipped: ", msg)
+
+    def execute(self, query: str):
+        self.connect()
+        self.cur.execute(query)
+        self.con.commit()
+
+        # Return results if it's a SELECT query
+        return self.cur.fetchall()
 
     def close(self):
         self.con.close()

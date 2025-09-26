@@ -20,7 +20,13 @@ CREATE TABLE IF NOT EXISTS plants (
 CREATE TABLE IF NOT EXISTS moisture (
     moisture_id INTEGER PRIMARY KEY,
     plant INTEGER,
-    value INTEGER,
+    value FLOAT,
     timestamp datetime,
     FOREIGN KEY (plant) REFERENCES plants(plant_id)
 );
+
+-- Add some data for testing
+INSERT INTO plants (name, species, sensor) VALUES 
+('Aloe Vera', 1, 1),
+('Basil', 2, 2),
+('Cactus', 3, 3);
