@@ -3,9 +3,6 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-# SQLite DB
-*.db
-
 # C extensions
 *.so
 
@@ -208,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Database
+*.db
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
