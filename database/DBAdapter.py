@@ -37,9 +37,9 @@ class DBAdapterPlant(DBAdapter):
         values = (data.name, data.species, data.sensor, data.plant_id)
         self.db_connector.execute(query, values)
 
-    def delete(self, data: plant):
+    def delete(self, data: int):
         query = "DELETE FROM plants WHERE plant_id = ?"
-        values = (data.plant_id,)
+        values = (data,)
         self.db_connector.execute(query, values)
 
 class DBAdapterSpecies(DBAdapter):
@@ -60,9 +60,9 @@ class DBAdapterSpecies(DBAdapter):
         values = (data.name, data.species_id)
         self.db_connector.execute(query, values)
 
-    def delete(self, data: species):
+    def delete(self, data: int):
         query = "DELETE FROM species WHERE species_id = ?"
-        values = (data.species_id,)
+        values = (data,)
         self.db_connector.execute(query, values)
 
 class DBAdapterSensor(DBAdapter):
@@ -83,9 +83,9 @@ class DBAdapterSensor(DBAdapter):
         values = (data.serial_no, data.sensor_id)
         self.db_connector.execute(query, values)
 
-    def delete(self, data: sensor):
+    def delete(self, data: int):
         query = "DELETE FROM sensors WHERE sensor_id = ?"
-        values = (data.sensor_id,)
+        values = (data,)
         self.db_connector.execute(query, values)
 
 class DBAdapterMoisture(DBAdapter):
