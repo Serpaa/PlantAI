@@ -51,13 +51,13 @@ class hmiConsole(hmi):
                     self.deleteEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
                     self.deleteEntry(self.dbAdapterSensor)
-            elif "view" in userInput:
+            elif "show" in userInput:
                 if "plant" in userInput:
-                    self.viewEntry(self.dbAdapterPlant)
+                    self.showEntry(self.dbAdapterPlant)
                 elif "species" in userInput:
-                    self.viewEntry(self.dbAdapterSpecies)
+                    self.showEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
-                    self.viewEntry(self.dbAdapterSensor)
+                    self.showEntry(self.dbAdapterSensor)
             elif userInput == "help":
                 self.help()
             elif userInput == "exit" or userInput == "bye":
@@ -104,23 +104,24 @@ class hmiConsole(hmi):
         if isinstance(dbAdapter, DBAdapterPlant):
             print("Choose a plant to delete (ID):")
             userInput = input(">>> ")
-            print(f"Plant {userInput} deleted!")
 
         elif isinstance(dbAdapter, DBAdapterSpecies):
             print("Choose a species to delete (ID):")
             userInput = input(">>> ")
-            print(f"Species {userInput} deleted!")
 
         elif isinstance(dbAdapter, DBAdapterSensor):
             print("Choose a sensor to delete (ID):")
             userInput = input(">>> ")
-            print(f"Sensor {userInput} deleted!")
 
         # Delete entry from database
-        dbAdapter.delete(userInput)
+        try:
+            dbAdapter.delete(userInput)
+            print(f"Entry {userInput} deleted!")
+        except Exception as ex:
+            print(ex)
 
-    # View entry
-    def viewEntry(self, dbAdapter: DBAdapter):
+    # Show entries
+    def showEntry(self, dbAdapter: DBAdapter):
         if isinstance(dbAdapter, DBAdapterPlant):
             print("[ID | Name | Species (ID) | Sensor (ID)]")
             print("----------------------------------------")
@@ -143,7 +144,7 @@ class hmiConsole(hmi):
         print("Available commands:")
         print("  add [plant,species,sensor]     Add a new plant, species or sensor")
         print("  delete [plant,species,sensor]  Delete a plant, species or sensor")
-        print("  view [plant,species,sensor]    View all plants, species or sensors")
+        print("  show [plant,species,sensor]    Show all plants, species or sensors")
         print("  help                           Show this help message")
         print("  exit,bye                       Exit")
 

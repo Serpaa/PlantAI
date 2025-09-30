@@ -107,7 +107,7 @@ class DBAdapterMoisture(DBAdapter):
         values = (data.plant, data.value, data.timestamp, data.moisture_id)
         self.db_connector.execute(query, values)
 
-    def delete(self, data: moisture):
+    def delete(self, data: int):
         query = "DELETE FROM moisture WHERE moisture_id = ?"
-        values = (data.moisture_id,)
+        values = (data,)
         self.db_connector.execute(query, values)
