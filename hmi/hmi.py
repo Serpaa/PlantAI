@@ -141,9 +141,9 @@ class hmiConsole(hmi):
     # Show help
     def help(self):
         print("Available commands:")
-        print("  add [plant,species,sensor]     Add a new plant, species, or sensor")
-        print("  delete [plant,species,sensor]  Delete a plant, species, or sensor")
-        print("  view [plant,species,sensor]    View all plants, species, or sensors")
+        print("  add [plant,species,sensor]     Add a new plant, species or sensor")
+        print("  delete [plant,species,sensor]  Delete a plant, species or sensor")
+        print("  view [plant,species,sensor]    View all plants, species or sensors")
         print("  help                           Show this help message")
         print("  exit,bye                       Exit")
 
