@@ -51,9 +51,9 @@ class SQLiteDB(DBConnector):
             # Raise exception if no rows were affected during a DELETE query
             if self.cur.rowcount == 0:
                 raise Exception("No matching entry found.")
-        elif "SELECT" in query:
-            # Return results if it's a SELECT query
-            return self.cur.fetchall()
+        
+        # Return results for SELECT query
+        return self.cur.fetchall()
 
     def close(self):
         self.con.close()
