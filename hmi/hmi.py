@@ -2,6 +2,7 @@ import threading
 from abc import ABC, abstractmethod
 from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor
 from model.models import plant, species, sensor
+from weather.weather import OpenMeteo
 
 class hmi(ABC):
     @abstractmethod
@@ -58,6 +59,8 @@ class hmiConsole(hmi):
                     self.showEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
                     self.showEntry(self.dbAdapterSensor)
+            elif userInput == "weather":
+                self.weather()
             elif userInput == "help":
                 self.help()
             elif userInput == "exit" or userInput == "bye":
@@ -139,12 +142,24 @@ class hmiConsole(hmi):
         for line in result:
             print(line)
 
+    # Show weather
+    def weather(self):
+        print("Choose a location:")
+        userInput = input(">>> ")
+
+        try:
+            # Get weather for location
+            print(OpenMeteo().getWeather(userInput))
+        except Exception as ex:
+            print(ex)
+
     # Show help
     def help(self):
         print("Available commands:")
         print("  add [plant,species,sensor]     Add a new plant, species or sensor")
         print("  delete [plant,species,sensor]  Delete a plant, species or sensor")
         print("  show [plant,species,sensor]    Show all plants, species or sensors")
+        print("  weather                        Show weather forecast")
         print("  help                           Show this help message")
         print("  exit,bye                       Exit")
 
