@@ -2,7 +2,7 @@ import threading
 from abc import ABC, abstractmethod
 from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor
 from model.models import plant, species, sensor
-from weather.weather import OpenMeteo
+from weather.OpenMeteo import OpenMeteo
 
 class hmi(ABC):
     @abstractmethod

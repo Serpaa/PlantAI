@@ -11,7 +11,7 @@ class OpenMeteo:
         # Create URL and send API request
         url = (
             f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}"
-            f"&hourly=temperature_2m,relative_humidity_2m,precipitation"
+            f"&hourly=temperature_2m,precipitation"
             f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
             f"&timezone=Europe%2FBerlin")
         response = requests.get(url)
@@ -20,11 +20,14 @@ class OpenMeteo:
         forecast = ""
         if response.status_code == 200:
             data = response.json()
-            forecast += "Aktuelle Vorhersage:\n"
-            forecast += f"  Stündliche Temperaturen (°C): {data['hourly']['temperature_2m'][:5]}\n"
-            forecast += f"  Luftfeuchtigkeit (%): {data['hourly']['relative_humidity_2m'][:5]}\n"
-            forecast += f"  Niederschlag (mm): {data['hourly']['precipitation'][:5]}\n"
-            forecast += "Tagesvorhersage:\n"
+            forecast += f"Aktuelle Vorhersage:\n"
+            forecast += f"--------------------\n"
+            forecast += f"> Stündliche Temperaturen (in °C):\n"
+            forecast += f"  {data['hourly']['temperature_2m'][:6]}\n\n"
+            forecast += f"> Niederschlag (in mm):\n"
+            forecast += f"  {data['hourly']['precipitation'][:6]}\n\n"
+            forecast += f"Tagesvorhersage (nächste 7 Tage):\n"
+            forecast += f"----------------\n"
             for date, tmax, tmin, rain in zip(
                 data["daily"]["time"],
                 data["daily"]["temperature_2m_max"],
