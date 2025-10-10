@@ -1,4 +1,4 @@
-import threading
+import sys
 from abc import ABC, abstractmethod
 from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor
 from model.models import plant, species, sensor
@@ -26,10 +26,6 @@ class hmiConsole(hmi):
         self.dbAdapterPlant = dbAdapterPlant
         self.dbAdapterSpecies = dbAdapterSpecies
         self.dbAdapterSensor = dbAdapterSensor
-
-        # Start new thread for selection
-        thread = threading.Thread(target=self.selection)
-        thread.start()
 
     def selection(self):
         print("Welcome to PlantAI!")
@@ -65,7 +61,6 @@ class hmiConsole(hmi):
                 self.help()
             elif userInput == "exit" or userInput == "bye":
                 self.bye()
-                break
             else:
                 print("Unknown command. Type 'help' for a list of commands.")
 
@@ -81,7 +76,7 @@ class hmiConsole(hmi):
             print("Plant added!")
 
             # Fill data with user input
-            data = plant(name=userInputName, species=userInputSpecies, sensor=userInputSensor)
+            data = plant(name=userInputName, speciesId=userInputSpecies, sensorId=userInputSensor)
 
         elif isinstance(dbAdapter, DBAdapterSpecies):
             print("Choose a name:")
@@ -92,11 +87,11 @@ class hmiConsole(hmi):
             print("Species added!")
 
         elif isinstance(dbAdapter, DBAdapterSensor):
-            print("Choose serial number:")
-            userInputSerial = input(">>> ")
+            print("Choose I2C-Address:")
+            userInputI2C = input(">>> ")
 
             # Fill data with user input
-            data = sensor(serial_no=userInputSerial)
+            data = sensor(i2cAddress=userInputI2C)
             print("Sensor added!")
 
         # Add entry to database
@@ -126,7 +121,7 @@ class hmiConsole(hmi):
     # Show entries
     def showEntry(self, dbAdapter: DBAdapter):
         if isinstance(dbAdapter, DBAdapterPlant):
-            print("[ID | Name | Species (ID) | Sensor (ID)]")
+            print("[ID | Species (ID) | Sensor (ID) | Name]")
             print("----------------------------------------")
 
         elif isinstance(dbAdapter, DBAdapterSpecies):
@@ -134,13 +129,13 @@ class hmiConsole(hmi):
             print("-----------")
 
         elif isinstance(dbAdapter, DBAdapterSensor):
-            print("[ID | Serial No.]")
-            print("-----------------")
+            print("[ID | I2C-Address]")
+            print("------------------")
 
-        # Get all entries from database and print
-        result = dbAdapter.select()
-        for line in result:
-            print(line)
+        # Get all objects from database and print
+        result = dbAdapter.getList()
+        for object in result:
+            print(object.__str__())
 
     # Show weather
     def weather(self):
@@ -166,3 +161,4 @@ class hmiConsole(hmi):
     # Exit
     def bye(self):
         print("Goodbye!")
+        sys.exit()

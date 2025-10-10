@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from database.DBConnector import DBConnector
-from model.models import plant, species, sensor, moisture
+from model.models import plant, species, sensor, measurement
 
 class DBAdapter(ABC):
     @abstractmethod
-    def select(self):
+    def getList(self):
         pass
 
     @abstractmethod
@@ -23,22 +23,27 @@ class DBAdapterPlant(DBAdapter):
     def __init__(self, db_connector: DBConnector):
         self.db_connector = db_connector
 
-    def select(self):
+    def getList(self) -> list[plant]:
         query = "SELECT * FROM plants"
-        return self.db_connector.execute(query)
+        allPlants = []
+
+        # Create a list of plants
+        for entry in self.db_connector.execute(query):
+            allPlants.append(plant(plantId=entry[0], speciesId=entry[1], sensorId=entry[2], name=entry[3]))
+        return allPlants
 
     def insert(self, data: plant):
-        query = "INSERT INTO plants (name, species, sensor) VALUES (?, ?, ?)"
-        values = (data.name, data.species, data.sensor)
+        query = "INSERT INTO plants (speciesId, sensorId, name) VALUES (?, ?, ?)"
+        values = (data.speciesId, data.sensorId, data.name)
         self.db_connector.execute(query, values)
 
     def update(self, data: plant):
-        query = "UPDATE plants SET name = ?, species = ?, sensor = ? WHERE plant_id = ?"
-        values = (data.name, data.species, data.sensor, data.plant_id)
+        query = "UPDATE plants SET speciesId = ?, sensorId = ?, name = ? WHERE plantId = ?"
+        values = (data.speciesId, data.sensorId, data.name, data.plantId)
         self.db_connector.execute(query, values)
 
     def delete(self, data: int):
-        query = "DELETE FROM plants WHERE plant_id = ?"
+        query = "DELETE FROM plants WHERE plantId = ?"
         values = (data,)
         self.db_connector.execute(query, values)
 
@@ -46,9 +51,14 @@ class DBAdapterSpecies(DBAdapter):
     def __init__(self, db_connector: DBConnector):
         self.db_connector = db_connector
 
-    def select(self):
-        query = "SELECT * FROM species"
-        return self.db_connector.execute(query)
+    def getList(self) -> list[species]:
+        query = "SELECT * FROM species"    
+        allSpecies = []
+
+        # Create a list of species
+        for entry in self.db_connector.execute(query):
+            allSpecies.append(species(speciesId=entry[0], name=entry[1]))
+        return allSpecies
 
     def insert(self, data: species):
         query = "INSERT INTO species (name) VALUES (?)"
@@ -56,12 +66,12 @@ class DBAdapterSpecies(DBAdapter):
         self.db_connector.execute(query, values)
 
     def update(self, data: species):
-        query = "UPDATE species SET name = ? WHERE species_id = ?"
-        values = (data.name, data.species_id)
+        query = "UPDATE species SET name = ? WHERE speciesId = ?"
+        values = (data.name, data.speciesId)
         self.db_connector.execute(query, values)
 
     def delete(self, data: int):
-        query = "DELETE FROM species WHERE species_id = ?"
+        query = "DELETE FROM species WHERE speciesId = ?"
         values = (data,)
         self.db_connector.execute(query, values)
 
@@ -69,45 +79,55 @@ class DBAdapterSensor(DBAdapter):
     def __init__(self, db_connector: DBConnector):
         self.db_connector = db_connector
 
-    def select(self):
+    def getList(self) -> list[sensor]:
         query = "SELECT * FROM sensors"
-        return self.db_connector.execute(query)
+        allSensors = []
+
+        # Create a list of sensors
+        for entry in self.db_connector.execute(query):
+            allSensors.append(sensor(sensorId=entry[0], i2cAddress=entry[1]),)
+        return allSensors
 
     def insert(self, data: sensor):
-        query = "INSERT INTO sensors (serial_no) VALUES (?)"
-        values = (data.serial_no,)
+        query = "INSERT INTO sensors (i2cAddress) VALUES (?)"
+        values = (data.i2cAddress,)
         self.db_connector.execute(query, values)
 
     def update(self, data: sensor):
-        query = "UPDATE sensors SET serial_no = ? WHERE sensor_id = ?"
-        values = (data.serial_no, data.sensor_id)
+        query = "UPDATE sensors SET i2cAddress = ? WHERE sensorId = ?"
+        values = (data.i2cAddress, data.sensorId)
         self.db_connector.execute(query, values)
 
     def delete(self, data: int):
-        query = "DELETE FROM sensors WHERE sensor_id = ?"
+        query = "DELETE FROM sensors WHERE sensorId = ?"
         values = (data,)
         self.db_connector.execute(query, values)
 
-class DBAdapterMoisture(DBAdapter):
+class DBAdapterMeasurement(DBAdapter):
     def __init__(self, db_connector: DBConnector):
         self.db_connector = db_connector
 
-    def select(self, target: plant):
-        query = "SELECT * FROM moisture WHERE plant = ?"
-        values = (target.plant_id,)
-        return self.db_connector.execute(query, values)
+    def getList(self, target: sensor) -> list[measurement]:
+        query = "SELECT * FROM measurements WHERE sensorId = ?"
+        values = (target.sensorId,)
+        allMeasurements = []
 
-    def insert(self, data: moisture):
-        query = "INSERT INTO moisture (plant, value, timestamp) VALUES (?, ?, ?)"
-        values = (data.plant, data.value, data.timestamp)
+        # Create a list of measurements
+        for entry in self.db_connector.execute(query, values):
+            allMeasurements.append(measurement(measureId=entry[0], sensorId=entry[1], moisture=entry[2], temperature=entry[3], timestamp=entry[4]))
+        return allMeasurements
+
+    def insert(self, data: measurement):
+        query = "INSERT INTO measurements (sensorId, moisture, temperature, timestamp) VALUES (?, ?, ?, ?)"
+        values = (data.sensorId, data.moisture, data.temperature, data.timestamp)
         self.db_connector.execute(query, values)
 
-    def update(self, data: moisture):
-        query = "UPDATE moisture SET plant = ?, value = ?, timestamp = ? WHERE moisture_id = ?"
-        values = (data.plant, data.value, data.timestamp, data.moisture_id)
+    def update(self, data: measurement):
+        query = "UPDATE measurements SET sensorId = ?, moisture = ?, temperature = ?, timestamp = ? WHERE measureId = ?"
+        values = (data.sensorId, data.moisture, data.temperature, data.timestamp, data.measureId)
         self.db_connector.execute(query, values)
 
     def delete(self, data: int):
-        query = "DELETE FROM moisture WHERE moisture_id = ?"
+        query = "DELETE FROM measurements WHERE measureId = ?"
         values = (data,)
         self.db_connector.execute(query, values)
