@@ -23,5 +23,5 @@ allSensors = dbAdapterSensor.getList()
 measurements = Measurements(allSensors, dbAdapterMeasurement)
 
 # Initialize Console
-hmi = hmiConsole(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor)
+hmi = hmiConsole(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)
 hmi.selection()

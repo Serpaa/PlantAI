@@ -107,9 +107,14 @@ class DBAdapterMeasurement(DBAdapter):
     def __init__(self, db_connector: DBConnector):
         self.db_connector = db_connector
 
-    def getList(self, target: sensor) -> list[measurement]:
-        query = "SELECT * FROM measurements WHERE sensorId = ?"
-        values = (target.sensorId,)
+    def getList(self, where: int, limit: int) -> list[measurement]:
+        query = """
+        SELECT * FROM (
+            SELECT * FROM measurements WHERE sensorId = ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?) 
+        ORDER BY timestamp"""
+        values = (where, limit)
         allMeasurements = []
 
         # Create a list of measurements

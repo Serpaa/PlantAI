@@ -1,6 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
-from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor
+from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from model.models import plant, species, sensor
 from weather.OpenMeteo import OpenMeteo
 
@@ -22,10 +22,11 @@ class hmi(ABC):
         pass
 
 class hmiConsole(hmi):
-    def __init__(self, dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor):
+    def __init__(self, dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
         self.dbAdapterPlant = dbAdapterPlant
         self.dbAdapterSpecies = dbAdapterSpecies
         self.dbAdapterSensor = dbAdapterSensor
+        self.dbAdapterMeasurement = dbAdapterMeasurement
 
     def selection(self):
         print("Welcome to PlantAI!")
@@ -55,6 +56,8 @@ class hmiConsole(hmi):
                     self.showEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
                     self.showEntry(self.dbAdapterSensor)
+                elif "measurements" in userInput:
+                    self.showMeasurements(self.dbAdapterMeasurement)
             elif userInput == "weather":
                 self.weather()
             elif userInput == "help":
@@ -134,6 +137,21 @@ class hmiConsole(hmi):
 
         # Get all objects from database and print
         result = dbAdapter.getList()
+        for object in result:
+            print(object.__str__())
+
+    # Show measurements
+    def showMeasurements(self, dbAdapter: DBAdapterMeasurement):
+        print("Choose a sensor to show (ID):")
+        userInputId = input(">>> ")
+        print("Choose how many entries:")
+        userInputEntries = input(">>> ")
+
+        print("[ID | Sensor (ID) | Moisture | Temperature | Timestamp]")
+        print("-------------------------------------------------------")
+
+        # Get all objects from database and print
+        result = dbAdapter.getList(where=int(userInputId), limit=int(userInputEntries))
         for object in result:
             print(object.__str__())
 
