@@ -108,6 +108,7 @@ class DBAdapterMeasurement(DBAdapter):
         self.db_connector = db_connector
 
     def getList(self, where: int, limit: int) -> list[measurement]:
+        # Get the most recent measurements then sort them from old -> new
         query = """
         SELECT * FROM (
             SELECT * FROM measurements WHERE sensorId = ? 
