@@ -49,6 +49,8 @@ class hmiConsole(hmi):
                     self.addEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
                     self.addEntry(self.dbAdapterSensor)
+                else:
+                    self.unknown()
             elif "delete" in userInput:
                 if "plant" in userInput:
                     self.deleteEntry(self.dbAdapterPlant)
@@ -56,6 +58,10 @@ class hmiConsole(hmi):
                     self.deleteEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
                     self.deleteEntry(self.dbAdapterSensor)
+                elif "measure" in userInput:
+                    self.deleteEntry(self.dbAdapterMeasurement)
+                else:
+                    self.unknown()
             elif "show" in userInput:
                 if "plant" in userInput:
                     self.showEntry(self.dbAdapterPlant)
@@ -63,8 +69,10 @@ class hmiConsole(hmi):
                     self.showEntry(self.dbAdapterSpecies)
                 elif "sensor" in userInput:
                     self.showEntry(self.dbAdapterSensor)
-                elif "measurements" in userInput:
-                    self.showMeasurements(self.dbAdapterMeasurement)
+                elif "measure" in userInput:
+                    self.showEntry(self.dbAdapterMeasurement)
+                else:
+                    self.unknown()
             elif userInput == "weather":
                 self.weather()
             elif userInput == "help":
@@ -72,7 +80,7 @@ class hmiConsole(hmi):
             elif userInput == "exit" or userInput == "bye":
                 self.bye()
             else:
-                print("Unknown command. Type 'help' for a list of commands.")
+                self.unknown()
 
     # Add new entry
     def addEntry(self, dbAdapter: DBAdapter):
@@ -120,6 +128,10 @@ class hmiConsole(hmi):
         elif isinstance(dbAdapter, DBAdapterSensor):
             print("Choose a sensor to delete (ID):")
             userInput = input(">>> ")
+        
+        elif isinstance(dbAdapter, DBAdapterMeasurement):
+            print("Choose a sensor to delete (ID):")
+            userInput = input(">>> ")
 
         # Delete entry from database
         try:
@@ -142,23 +154,22 @@ class hmiConsole(hmi):
             print("[ID | I2C-Address]")
             print("------------------")
 
-        # Get all objects from database and print
-        result = dbAdapter.getList()
-        for object in result:
-            print(object.__str__())
+        elif isinstance(dbAdapter, DBAdapterMeasurement):
+            print("Choose a sensor to show (ID):")
+            userInputId = input(">>> ")
+            print("Choose how many entries:")
+            userInputEntries = input(">>> ")
 
-    # Show measurements
-    def showMeasurements(self, dbAdapter: DBAdapterMeasurement):
-        print("Choose a sensor to show (ID):")
-        userInputId = input(">>> ")
-        print("Choose how many entries:")
-        userInputEntries = input(">>> ")
+            print("[ID | Sensor (ID) | Moisture | Temperature | Timestamp]")
+            print("-------------------------------------------------------")
 
-        print("[ID | Sensor (ID) | Moisture | Temperature | Timestamp]")
-        print("-------------------------------------------------------")
+        # Get all objects from database
+        if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies) or isinstance(dbAdapter, DBAdapterSensor):
+            result = dbAdapter.getList()
+        elif isinstance(dbAdapter, DBAdapterMeasurement):
+            result = dbAdapter.getList(where=int(userInputId), limit=int(userInputEntries))
 
-        # Get all objects from database and print
-        result = dbAdapter.getList(where=int(userInputId), limit=int(userInputEntries))
+        # Print all objects
         for object in result:
             print(object.__str__())
 
@@ -176,12 +187,16 @@ class hmiConsole(hmi):
     # Show help
     def help(self):
         print("Available commands:")
-        print("  add [plant,species,sensor]     Add a new plant, species or sensor")
-        print("  delete [plant,species,sensor]  Delete a plant, species or sensor")
-        print("  show [plant,species,sensor]    Show all plants, species or sensors")
-        print("  weather                        Show weather forecast")
-        print("  help                           Show this help message")
-        print("  exit,bye                       Exit")
+        print("  add [plant,species,sensor]             Add a new plant, species or sensor")
+        print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
+        print("  show [plant,species,sensor,measure]    Show all plants, species, sensors or measurements")
+        print("  weather                                Show weather forecast")
+        print("  help                                   Show this help message")
+        print("  exit,bye                               Exit")
+    
+    # Unknown command
+    def unknown(self):
+        print("Unknown command. Type 'help' for a list of commands.")
 
     # Exit
     def bye(self):

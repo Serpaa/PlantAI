@@ -141,6 +141,6 @@ class DBAdapterMeasurement(DBAdapter):
         self.db_connector.execute(query, values)
 
     def delete(self, data: int):
-        query = "DELETE FROM measurements WHERE measureId = ?"
+        query = "DELETE FROM measurements WHERE sensorId = ?"
         values = (data,)
         self.db_connector.execute(query, values)

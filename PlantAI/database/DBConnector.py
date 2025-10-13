@@ -35,7 +35,7 @@ class SQLiteDB(DBConnector):
         self.connect()
 
         # Read SQL file
-        file = open("database/PlantAI.sql", "r")
+        file = open("PlantAI/database/PlantAI.sql", "r")
         sqlFile = file.read()
         file.close()
 
