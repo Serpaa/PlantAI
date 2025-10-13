@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from database.DBConnector import DBConnector
-from model.models import plant, species, sensor, measurement
+from data.Models import plant, species, sensor, measurement
 
 class DBAdapter(ABC):
     @abstractmethod

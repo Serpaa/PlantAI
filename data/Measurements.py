@@ -3,7 +3,7 @@ import time
 import platform
 from adafruit_seesaw.seesaw import Seesaw
 from datetime import datetime
-from model.models import sensor, measurement
+from data.Models import sensor, measurement
 from database.DBAdapter import DBAdapterMeasurement
 
 class Measurements:
