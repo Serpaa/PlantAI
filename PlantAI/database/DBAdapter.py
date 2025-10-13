@@ -1,3 +1,10 @@
+"""
+Description:
+    Database adapter for each table, supports select, insert, update and delete statements
+Author: Tim Grundey
+Created: 25.09.2025
+"""
+
 from abc import ABC, abstractmethod
 from database.DBConnector import DBConnector
 from core.models import plant, species, sensor, measurement

@@ -1,3 +1,10 @@
+"""
+Description:
+    Initializes the I2C moisture sensors and reads their data periodically
+Author: Tim Grundey
+Created: 10.10.2025
+"""
+
 import busio
 import time
 import platform

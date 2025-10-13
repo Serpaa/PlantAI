@@ -1,3 +1,10 @@
+"""
+Description:
+    Data models for all database tables
+Author: Tim Grundey
+Created: 25.09.2025
+"""
+
 class plant:
     def __init__(self, name: str, speciesId: int, sensorId: int, plantId: int = 0):
         self.plantId = plantId

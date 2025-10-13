@@ -1,3 +1,10 @@
+"""
+Description:
+    Creates and connects the SQLite3 database
+Author: Tim Grundey
+Created: 25.09.2025
+"""
+
 from abc import ABC, abstractmethod
 import sqlite3
 

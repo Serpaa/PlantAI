@@ -1,3 +1,10 @@
+"""
+Description:
+    Weather and Geocoding API using OpenMeteo
+Author: Tim Grundey
+Created: 03.10.2025
+"""
+
 import requests
 from geopy.distance import geodesic
 

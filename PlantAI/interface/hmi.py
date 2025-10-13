@@ -1,3 +1,10 @@
+"""
+Description:
+    Interface for basic database and show commands using the CLI
+Author: Tim Grundey
+Created: 30.09.2025
+"""
+
 import sys
 from abc import ABC, abstractmethod
 from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement

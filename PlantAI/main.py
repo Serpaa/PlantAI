@@ -1,3 +1,10 @@
+"""
+Description: 
+    Main class of PlantAI
+Author: Tim Grundey
+Created: 24.09.2025
+"""
+
 import os
 import threading
 from core.measurements import Measurements

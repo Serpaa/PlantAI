@@ -1,3 +1,10 @@
+/*
+Description:
+    SQL Query for creating the SQLite3 database
+Author: Tim Grundey
+Created: 25.09.2025
+*/
+
 CREATE TABLE IF NOT EXISTS species (
     speciesId INTEGER PRIMARY KEY,
     name VARCHAR(40)
