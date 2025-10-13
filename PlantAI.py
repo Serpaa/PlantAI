@@ -1,4 +1,5 @@
 import os
+import threading
 from data.Measurements import Measurements
 from database.DBConnector import SQLiteDB
 from database.DBAdapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
@@ -18,9 +19,13 @@ dbAdapterSpecies = DBAdapterSpecies(db)
 dbAdapterSensor = DBAdapterSensor(db)
 dbAdapterMeasurement = DBAdapterMeasurement(db)
 
-# Initialize each sensor and read moisture and temperature
-allSensors = dbAdapterSensor.getList()
-measurements = Measurements(allSensors, dbAdapterMeasurement)
+# Initialize each sensor
+measurements = Measurements()
+measurements.initSensor(dbAdapterSensor.getList())
+
+# Start new thread for reading sensor data
+thread = threading.Thread(target=measurements.read, args=(dbAdapterMeasurement,), daemon=True)
+thread.start()
 
 # Initialize Console
 hmi = hmiConsole(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)
