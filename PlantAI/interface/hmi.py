@@ -1,8 +1,8 @@
 import sys
 from abc import ABC, abstractmethod
 from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from data.Models import plant, species, sensor
-from weather.OpenMeteo import OpenMeteo
+from core.models import plant, species, sensor
+from api.OpenMeteo import OpenMeteo
 
 class hmi(ABC):
     @abstractmethod
