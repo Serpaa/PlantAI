@@ -7,13 +7,14 @@ Created: 24.09.2025
 
 import os
 import threading
+from config.loader import getConfig
 from core.measurements import Measurements
 from database.DBConnector import SQLiteDB
 from database.DBAdapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.hmi import hmiConsole
 
 # Initialize database connection
-dbURL = "PlantAI/database/PlantAI.db"
+dbURL = getConfig("database","path")
 db = SQLiteDB(dbURL)
 
 # Create database if it doesn't exist

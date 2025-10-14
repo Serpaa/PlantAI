@@ -10,6 +10,7 @@ import time
 import platform
 from adafruit_seesaw.seesaw import Seesaw
 from datetime import datetime
+from config.loader import getConfig
 from core.models import sensor, measurement
 from database.DBAdapter import DBAdapterMeasurement
 
@@ -42,4 +43,5 @@ class Measurements:
                 # Insert dummy values
                 dbAdapter.insert(measurement(1, 400, 23.0, datetime.now()))
             # Wait until next reading
-            time.sleep(60)
+            sleep = getConfig("core", "readIntervalSensors")
+            time.sleep(sleep)
