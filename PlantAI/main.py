@@ -27,7 +27,7 @@ dbAdapterSpecies = DBAdapterSpecies(db)
 dbAdapterSensor = DBAdapterSensor(db)
 dbAdapterMeasurement = DBAdapterMeasurement(db)
 
-# Initialize each sensor (if available)
+# Get all sensors from database
 measurements = Measurements()
 allSensors = dbAdapterSensor.getList()
 
