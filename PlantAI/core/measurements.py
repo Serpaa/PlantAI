@@ -26,7 +26,10 @@ class Measurements:
 
             # Create dictionary to connect each sensor with its seesaw object
             for sen in allSensors:
-                self.SensorToSeesaw = {sen : Seesaw(i2c, addr=sen.i2cAddress)}
+                try:
+                    self.SensorToSeesaw = {sen : Seesaw(i2c, addr=sen.i2cAddress)}
+                except RuntimeError as re:
+                    print(re)
         else:
             print(f"Sensor initialization skipped! (not running on Jetson Nano)")
     
