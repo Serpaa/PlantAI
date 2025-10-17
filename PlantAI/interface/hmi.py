@@ -105,11 +105,11 @@ class hmiConsole(hmi):
             print("Species added!")
 
         elif isinstance(dbAdapter, DBAdapterSensor):
-            print("Choose I2C-Address:")
+            print("Choose I2C-Address (hex: 0x36):")
             userInputI2C = input(">>> ")
 
             # Fill data with user input
-            data = sensor(i2cAddress=userInputI2C)
+            data = sensor(i2cAddress=hex(userInputI2C))
             print("Sensor added!")
 
         # Add entry to database
