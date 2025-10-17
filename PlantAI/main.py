@@ -27,13 +27,17 @@ dbAdapterSpecies = DBAdapterSpecies(db)
 dbAdapterSensor = DBAdapterSensor(db)
 dbAdapterMeasurement = DBAdapterMeasurement(db)
 
-# Initialize each sensor
+# Initialize each sensor (if available)
 measurements = Measurements()
-measurements.initSensor(dbAdapterSensor.getList())
+allSensors = dbAdapterSensor.getList()
 
-# Start new thread for reading sensor data
-thread = threading.Thread(target=measurements.read, args=(dbAdapterMeasurement,), daemon=True)
-thread.start()
+if len(allSensors) > 0:
+    # Initialize each sensor
+    measurements.initSensor(allSensors)
+
+    # Start new thread for reading sensor data
+    thread = threading.Thread(target=measurements.read, args=(dbAdapterMeasurement,), daemon=True)
+    thread.start()
 
 # Initialize Console
 hmi = hmiConsole(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)

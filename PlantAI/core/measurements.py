@@ -20,8 +20,7 @@ class Measurements:
 
     def initSensor(self, allSensors : list[sensor]):
         # Skip initialization if not running on Jetson Nano
-        # if should be edited later to Jetson Nano info
-        if not platform.processor() == "arm":
+        if "tegra" in platform.release():
             from board import SCL, SDA
             i2c = busio.I2C(SCL, SDA)
 
@@ -34,8 +33,7 @@ class Measurements:
     def read(self, dbAdapter: DBAdapterMeasurement):
         while True:
             # Skip reading sensor data if not running on Jetson Nano
-            # if should be edited later to Jetson Nano info
-            if not platform.processor() == "arm":
+            if "tegra" in platform.release():
                 # Read moisture and temperature, insert it into database
                 for sen, see in self.SensorToSeesaw.items():
                     dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), datetime.now()))
