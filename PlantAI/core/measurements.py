@@ -28,8 +28,8 @@ class Measurements:
             for sen in allSensors:
                 try:
                     self.SensorToSeesaw = {sen : Seesaw(i2c, addr=sen.i2cAddress)}
-                except RuntimeError as re:
-                    print(re)
+                except (RuntimeError, ValueError) as error:
+                    print(error)
         else:
             print(f"Sensor initialization skipped! (not running on Jetson Nano)")
     
