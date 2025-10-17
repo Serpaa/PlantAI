@@ -2,5 +2,5 @@ database:
   path: PlantAI/database/PlantAI.db
 
 core:
-  readIntervalSensors: 60
+  readIntervalSensors: 900
   
