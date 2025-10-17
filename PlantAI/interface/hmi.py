@@ -109,7 +109,7 @@ class hmiConsole(hmi):
             userInputI2C = input(">>> ")
 
             # Fill data with user input
-            data = sensor(i2cAddress=hex(userInputI2C))
+            data = sensor(i2cAddress=int(userInputI2C, 16))
             print("Sensor added!")
 
         # Add entry to database
