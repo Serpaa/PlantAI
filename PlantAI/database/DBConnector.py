@@ -1,3 +1,10 @@
+"""
+Description:
+    Creates and connects the SQLite3 database
+Author: Tim Grundey
+Created: 25.09.2025
+"""
+
 from abc import ABC, abstractmethod
 import sqlite3
 
@@ -28,7 +35,7 @@ class SQLiteDB(DBConnector):
         self.connect()
 
         # Read SQL file
-        file = open("database/PlantAI.sql", "r")
+        file = open("PlantAI/database/PlantAI.sql", "r")
         sqlFile = file.read()
         file.close()
 
