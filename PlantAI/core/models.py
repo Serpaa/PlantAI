@@ -40,5 +40,5 @@ class measurement:
         self.timestamp = timestamp
     
     def __str__(self) -> str:
-        return f"[{self.measureId} | {self.sensorId} | {self.moisture} | {self.temperature} | {self.timestamp}]"
+        return f"[{self.measureId} | {self.sensorId} | {self.moisture} | {self.temperature:.1f} | {self.timestamp}]"
         

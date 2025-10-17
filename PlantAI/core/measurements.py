@@ -36,7 +36,11 @@ class Measurements:
             if "tegra" in platform.release():
                 # Read moisture and temperature, insert it into database
                 for sen, see in self.SensorToSeesaw.items():
-                    dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), datetime.now()))
+                    # Format timestamp
+                    now = datetime.now()
+                    timestamp = now.strftime("%Y/%m/%d %H:%M")
+                
+                    dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), timestamp))
             else:
                 # Insert dummy values
                 dbAdapter.insert(measurement(1, 400, 23.0, datetime.now()))
