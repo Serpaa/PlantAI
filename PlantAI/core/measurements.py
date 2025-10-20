@@ -44,9 +44,6 @@ class Measurements:
                     timestamp = now.strftime("%Y/%m/%d %H:%M")
                 
                     dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), timestamp))
-            else:
-                # Insert dummy values
-                dbAdapter.insert(measurement(1, 400, 23.0, datetime.now()))
             # Wait until next reading
             sleep = getConfig("core", "readIntervalSensors")
             time.sleep(sleep)
