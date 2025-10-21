@@ -34,16 +34,23 @@ class Measurements:
             print(f"Sensor initialization skipped! (not running on Jetson Nano)")
     
     def read(self, dbAdapter: DBAdapterMeasurement):
-        while True:
-            # Skip reading sensor data if not running on Jetson Nano
-            if "tegra" in platform.release():
-                # Read moisture and temperature, insert it into database
+        # Skip reading sensor data if not running on Jetson Nano
+        if "tegra" in platform.release():
+            while True:
+                # Check if reading mode is interval or debug
+                mode = getConfig("core", "readMode")
                 for sen, see in self.SensorToSeesaw.items():
-                    # Format timestamp
-                    now = datetime.now()
-                    timestamp = now.strftime("%Y/%m/%d %H:%M")
-                
-                    dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), timestamp))
-            # Wait until next reading
-            sleep = getConfig("core", "readIntervalSensors")
-            time.sleep(sleep)
+                    if mode == "interval":
+                        # Format timestamp
+                        now = datetime.now()
+                        timestamp = now.strftime("%Y/%m/%d %H:%M")
+
+                        # Read moisture and temperature, insert it into database
+                        dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), timestamp))
+                    elif mode == "debug":
+                        # Print moisture directly
+                        print(f"Sensor[{sen.sensorId}]: {see.moisture_read()}")
+
+                # Wait until next reading
+                sleep = getConfig("core", "readIntervalSensors")
+                time.sleep(sleep)

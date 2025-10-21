@@ -2,5 +2,6 @@ database:
   path: PlantAI/database/PlantAI.db
 
 core:
+  readMode: interval
   readIntervalSensors: 900
   
