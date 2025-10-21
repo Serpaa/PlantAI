@@ -8,6 +8,7 @@ Created: 30.09.2025
 import sys
 from abc import ABC, abstractmethod
 from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from database.Export import createCSV
 from core.models import plant, species, sensor
 from api.OpenMeteo import OpenMeteo
 
@@ -75,6 +76,8 @@ class hmiConsole(hmi):
                     self.unknown()
             elif userInput == "weather":
                 self.weather()
+            elif userInput == "export":
+                self.exportEntry(self.dbAdapterMeasurement)
             elif userInput == "help":
                 self.help()
             elif userInput == "exit" or userInput == "bye":
@@ -184,6 +187,18 @@ class hmiConsole(hmi):
         except Exception as ex:
             print(ex)
 
+    # Export entry
+    def exportEntry(self, dbAdapter: DBAdapter):
+        print("Choose a sensor to export (ID):")
+        userInputId = input(">>> ")
+        
+        # Get all objects from database (-1 = unlimited)
+        result = dbAdapter.getList(where=int(userInputId), limit=int(-1))
+
+        # Create export
+        createCSV(result)
+        print("Export created!")
+
     # Show help
     def help(self):
         print("Available commands:")
@@ -191,6 +206,7 @@ class hmiConsole(hmi):
         print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
         print("  show [plant,species,sensor,measure]    Show all plants, species, sensors or measurements")
         print("  weather                                Show weather forecast")
+        print("  export                                 Exports all measurements to CSV")
         print("  help                                   Show this help message")
         print("  exit,bye                               Exit")
     
