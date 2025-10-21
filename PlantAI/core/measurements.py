@@ -49,7 +49,7 @@ class Measurements:
                         loops = 10; sumMoisture = 0.0
                         for x in range(loops):
                             sumMoisture += see.moisture_read()
-                            sleep(1)
+                            time.sleep(1)
 
                         # Calculate average moisture
                         averageMoisture = sumMoisture / loops
