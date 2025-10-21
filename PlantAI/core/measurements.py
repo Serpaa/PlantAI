@@ -56,10 +56,14 @@ class Measurements:
 
                         # Read moisture and temperature, insert it into database
                         dbAdapter.insert(measurement(sen.sensorId, averageMoisture, see.get_temp(), timestamp))
+
+                        # Wait until next reading
+                        sleep = getConfig("core", "readIntervalSensors")
+                        time.sleep(sleep)
+
                     elif mode == "debug":
                         # Print moisture directly
                         print(f"Sensor[{sen.sensorId}]: {see.moisture_read()}")
-
-                # Wait until next reading
-                sleep = getConfig("core", "readIntervalSensors")
-                time.sleep(sleep)
+                        
+                        # Wait until next reading
+                        time.sleep(1)
