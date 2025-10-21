@@ -46,7 +46,7 @@ class Measurements:
                         timestamp = now.strftime("%Y/%m/%d %H:%M")
 
                         # Read moisture multiple times and get average
-                        loops = 10; sumMoisture : float
+                        loops = 10; sumMoisture = 0.0
                         for x in range(loops):
                             sumMoisture += see.moisture_read()
                             sleep(1)
