@@ -45,8 +45,17 @@ class Measurements:
                         now = datetime.now()
                         timestamp = now.strftime("%Y/%m/%d %H:%M")
 
+                        # Read moisture multiple times and get average
+                        loops = 10; sumMoisture : float
+                        for x in range(loops):
+                            sumMoisture += see.moisture_read()
+                            sleep(1)
+
+                        # Calculate average moisture
+                        averageMoisture = sumMoisture / loops
+
                         # Read moisture and temperature, insert it into database
-                        dbAdapter.insert(measurement(sen.sensorId, see.moisture_read(), see.get_temp(), timestamp))
+                        dbAdapter.insert(measurement(sen.sensorId, averageMoisture, see.get_temp(), timestamp))
                     elif mode == "debug":
                         # Print moisture directly
                         print(f"Sensor[{sen.sensorId}]: {see.moisture_read()}")
