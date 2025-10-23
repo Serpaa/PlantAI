@@ -6,7 +6,7 @@ Created: 25.09.2025
 """
 
 from abc import ABC, abstractmethod
-from database.DBConnector import DBConnector
+from database.connector import DBConnector
 from core.models import plant, species, sensor, measurement
 
 class DBAdapter(ABC):

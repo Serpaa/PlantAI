@@ -7,8 +7,8 @@ Created: 30.09.2025
 
 import sys
 from abc import ABC, abstractmethod
-from database.DBAdapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from database.DBExport import createCSV
+from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from database.export import createCSV
 from core.models import plant, species, sensor
 from api.OpenMeteo import OpenMeteo
 

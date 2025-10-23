@@ -9,8 +9,8 @@ import os
 import threading
 from config.loader import getConfig
 from core.measurements import Measurements
-from database.DBConnector import SQLiteDB
-from database.DBAdapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from database.connector import SQLiteDB
+from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.hmi import hmiConsole
 
 # Initialize database connection
