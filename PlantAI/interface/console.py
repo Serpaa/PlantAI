@@ -9,7 +9,7 @@ import sys
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from database.export import createCSV
 from core.models import plant, species, sensor
-from api.OpenMeteo import OpenMeteo
+from api.OpenMeteo import getWeather
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
     print("Welcome to PlantAI!")
@@ -158,7 +158,7 @@ def weather():
 
     try:
         # Get weather for location
-        print(OpenMeteo().getWeather(userInput))
+        print(getWeather(userInput))
     except Exception as ex:
         print(ex)
 
