@@ -11,7 +11,7 @@ from config.loader import getConfig
 from core.measurements import Measurements
 from database.connector import SQLiteDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from interface.hmi import hmiConsole
+from interface.console import mainMenu
 
 # Initialize database connection
 dbURL = getConfig("database","path")
@@ -40,5 +40,4 @@ if len(allSensors) > 0:
     thread.start()
 
 # Initialize Console
-hmi = hmiConsole(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)
-hmi.selection()
+mainMenu(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)
