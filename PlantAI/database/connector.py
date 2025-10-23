@@ -5,23 +5,9 @@ Author: Tim Grundey
 Created: 25.09.2025
 """
 
-from abc import ABC, abstractmethod
 import sqlite3
 
-class DBConnector(ABC):
-    @abstractmethod
-    def connect(self):
-        pass
-
-    @abstractmethod
-    def execute(self, query: str):
-        pass
-
-    @abstractmethod
-    def close(self):
-        pass
-
-class SQLiteDB(DBConnector):
+class SQLiteDB:
     def __init__(self, db_path: str):
         self.db_path = db_path
         con = None
