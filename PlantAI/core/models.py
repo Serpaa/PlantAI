@@ -16,12 +16,13 @@ class plant:
         return f"[{self.plantId} | {self.speciesId} | {self.sensorId} | {self.name}]"
     
 class species:
-    def __init__(self, name: str, speciesId: int = 0):
+    def __init__(self, name: str, minMoisture: float, speciesId: int = 0):
         self.speciesId = speciesId
         self.name = name
+        self.minMoisture = minMoisture
 
     def __str__(self) -> str:
-        return f"[{self.speciesId} | {self.name}]"
+        return f"[{self.speciesId} | {self.name} | {self.minMoisture}]"
 
 class sensor:
     def __init__(self, i2cAddress : int, sensorId: int = 0):
@@ -32,13 +33,14 @@ class sensor:
         return f"[{self.sensorId} | {self.i2cAddress}]"
     
 class measurement:
-    def __init__(self, sensorId: int, moisture: float, temperature: float, timestamp: str, measureId: int = 0):
+    def __init__(self, sensorId: int, moisture: float, temperature: float, minUntilDry: int, timestamp: str, measureId: int = 0):
         self.measureId = measureId
         self.sensorId = sensorId
         self.moisture = moisture
         self.temperature = temperature
+        self.minUntilDry = minUntilDry
         self.timestamp = timestamp
     
     def __str__(self) -> str:
-        return f"[{self.measureId} | {self.sensorId} | {self.moisture} | {self.temperature:.1f} | {self.timestamp}]"
+        return f"[{self.measureId} | {self.sensorId} | {self.moisture} | {self.temperature:.1f} | {self.minUntilDry} | {self.timestamp}]"
         

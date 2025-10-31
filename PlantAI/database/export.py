@@ -13,6 +13,6 @@ def createCSV(allMeasurements: list[measurement]):
         writer = csv.writer(file)
 
         # Write header then all data rows
-        writer.writerow(["Timestamp", "Moisture", "Temperature"])
+        writer.writerow(["Minutes until Dry", "Moisture", "Temperature", "Timestamp"])
         for object in allMeasurements:
-            writer.writerow([object.timestamp, int(object.moisture), object.temperature])
+            writer.writerow([object.minUntilDry, int(object.moisture), object.temperature, object.timestamp])

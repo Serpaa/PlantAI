@@ -64,17 +64,17 @@ class DBAdapterSpecies(DBAdapter):
 
         # Create a list of species
         for entry in self.db.execute(query):
-            allSpecies.append(species(speciesId=entry[0], name=entry[1]))
+            allSpecies.append(species(speciesId=entry[0], name=entry[1], minMoisture=entry[2]))
         return allSpecies
 
     def insert(self, data: species):
-        query = "INSERT INTO species (name) VALUES (?)"
-        values = (data.name,)
+        query = "INSERT INTO species (name, minMoisture) VALUES (?, ?)"
+        values = (data.name, data.minMoisture)
         self.db.execute(query, values)
 
     def update(self, data: species):
-        query = "UPDATE species SET name = ? WHERE speciesId = ?"
-        values = (data.name, data.speciesId)
+        query = "UPDATE species SET name = ?, minMoisture = ? WHERE speciesId = ?"
+        values = (data.name, data.minMoisture, data.speciesId)
         self.db.execute(query, values)
 
     def delete(self, data: int):
@@ -127,17 +127,18 @@ class DBAdapterMeasurement(DBAdapter):
 
         # Create a list of measurements
         for entry in self.db.execute(query, values):
-            allMeasurements.append(measurement(measureId=entry[0], sensorId=entry[1], moisture=entry[2], temperature=entry[3], timestamp=entry[4]))
+            allMeasurements.append(
+                measurement(measureId=entry[0], sensorId=entry[1], moisture=entry[2], temperature=entry[3], minUntilDry=entry[4], timestamp=entry[5]))
         return allMeasurements
 
     def insert(self, data: measurement):
-        query = "INSERT INTO measurements (sensorId, moisture, temperature, timestamp) VALUES (?, ?, ?, ?)"
-        values = (data.sensorId, data.moisture, data.temperature, data.timestamp)
+        query = "INSERT INTO measurements (sensorId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
+        values = (data.sensorId, data.moisture, data.temperature, data.minUntilDry, data.timestamp)
         self.db.execute(query, values)
 
     def update(self, data: measurement):
-        query = "UPDATE measurements SET sensorId = ?, moisture = ?, temperature = ?, timestamp = ? WHERE measureId = ?"
-        values = (data.sensorId, data.moisture, data.temperature, data.timestamp, data.measureId)
+        query = "UPDATE measurements SET sensorId = ?, moisture = ?, temperature = ?, minUntilDry = ?, timestamp = ? WHERE measureId = ?"
+        values = (data.sensorId, data.moisture, data.temperature, data.minUntilDry, data.timestamp, data.measureId)
         self.db.execute(query, values)
 
     def delete(self, data: int):

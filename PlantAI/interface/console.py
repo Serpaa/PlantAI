@@ -78,8 +78,11 @@ def addEntry(dbAdapter: DBAdapter):
         print("Choose a name:")
         userInputName = input(">>> ")
 
+        print("Choose a min. Moisture:")
+        userInputMoisture = input(">>> ")
+
         # Fill data with user input
-        data = species(name=userInputName)
+        data = species(name=userInputName, minMoisture=userInputMoisture)
         print("Species added!")
 
     elif isinstance(dbAdapter, DBAdapterSensor):
@@ -125,8 +128,8 @@ def showEntry(dbAdapter: DBAdapter):
         print("----------------------------------------")
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
-        print("[ID | Name]")
-        print("-----------")
+        print("[ID | Name | min. Moisture]")
+        print("---------------------------")
 
     elif isinstance(dbAdapter, DBAdapterSensor):
         print("[ID | I2C-Address]")
@@ -138,8 +141,8 @@ def showEntry(dbAdapter: DBAdapter):
         print("Choose how many entries:")
         userInputEntries = input(">>> ")
 
-        print("[ID | Sensor (ID) | Moisture | Temperature | Timestamp]")
-        print("-------------------------------------------------------")
+        print("[ID | Sensor (ID) | Moisture | Temperature | Minutes until Dry | Timestamp]")
+        print("---------------------------------------------------------------------------")
 
     # Get all objects from database
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies) or isinstance(dbAdapter, DBAdapterSensor):
