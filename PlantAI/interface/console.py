@@ -10,6 +10,7 @@ from config.loader import getConfig
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from database.streams import exportAsCSV, importFromCSV
 from core.models import plant, species, sensor
+from core.predictions import hoursUntilDry
 from api.OpenMeteo import getWeather
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
@@ -57,6 +58,8 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 exportEntry(dbAdapterMeasurement)
             else:
                 unknown()
+        elif userInput == "predict":
+            predict(dbAdapterMeasurement)
         elif userInput == "weather":
             weather()
         elif userInput == "help":
@@ -160,17 +163,6 @@ def showEntry(dbAdapter: DBAdapter):
     for object in result:
         print(object.__str__())
 
-# Show weather
-def weather():
-    print("Choose a location:")
-    userInput = input(">>> ")
-
-    try:
-        # Get weather for location
-        print(getWeather(userInput))
-    except Exception as ex:
-        print(ex)
-
 # Import entry
 def importEntry(dbAdapter: DBAdapter):
     print("Choose a sensor to import (ID):")
@@ -195,6 +187,21 @@ def exportEntry(dbAdapter: DBAdapter):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
+# Predictions
+def predict(dbAdapter: DBAdapter):
+    hoursUntilDry(dbAdapter.getList(where=1, limit=int(-1)))
+
+# Show weather
+def weather():
+    print("Choose a location:")
+    userInput = input(">>> ")
+
+    try:
+        # Get weather for location
+        print(getWeather(userInput))
+    except Exception as ex:
+        print(ex)
+
 # Show help
 def help():
     print("Available commands:")
@@ -202,6 +209,7 @@ def help():
     print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
     print("  show [plant,species,sensor,measure]    Show all plants, species, sensors or measurements")
     print("  csv [import,export]                    Imports or exports all measurements using CSV")
+    print("  predict                                Predict in how many hours the plant soil is dry")
     print("  weather                                Show weather forecast")
     print("  help                                   Show this help message")
     print("  exit,bye                               Exit")
