@@ -6,8 +6,9 @@ Created: 30.09.2025
 """
 
 import sys
+from config.loader import getConfig
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from database.export import createCSV
+from database.streams import exportAsCSV, importFromCSV
 from core.models import plant, species, sensor
 from api.OpenMeteo import getWeather
 
@@ -49,10 +50,15 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 showEntry(dbAdapterMeasurement)
             else:
                 unknown()
+        elif "csv" in userInput:
+            if "import" in userInput:
+                importEntry(dbAdapterMeasurement)
+            elif "export" in userInput:
+                exportEntry(dbAdapterMeasurement)
+            else:
+                unknown()
         elif userInput == "weather":
             weather()
-        elif userInput == "export":
-            exportEntry(dbAdapterMeasurement)
         elif userInput == "help":
             help()
         elif userInput == "exit" or userInput == "bye":
@@ -165,6 +171,17 @@ def weather():
     except Exception as ex:
         print(ex)
 
+# Import entry
+def importEntry(dbAdapter: DBAdapter):
+    print("Choose a sensor to import (ID):")
+    userInputId = input(">>> ")
+
+    # Insert new data into database
+    path = getConfig("csv", "import")
+    for entry in importFromCSV(path=path, sensorId=userInputId):
+        dbAdapter.insert(entry)
+    print("Import successful!")
+
 # Export entry
 def exportEntry(dbAdapter: DBAdapter):
     print("Choose a sensor to export (ID):")
@@ -174,8 +191,9 @@ def exportEntry(dbAdapter: DBAdapter):
     result = dbAdapter.getList(where=int(userInputId), limit=int(-1))
 
     # Create export
-    createCSV(result)
-    print("Export created!")
+    path = getConfig("csv", "export")
+    exportAsCSV(path=path, allMeasurements=result)
+    print("Export successful!")
 
 # Show help
 def help():
@@ -183,8 +201,8 @@ def help():
     print("  add [plant,species,sensor]             Add a new plant, species or sensor")
     print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
     print("  show [plant,species,sensor,measure]    Show all plants, species, sensors or measurements")
+    print("  csv [import,export]                    Imports or exports all measurements using CSV")
     print("  weather                                Show weather forecast")
-    print("  export                                 Exports all measurements to CSV")
     print("  help                                   Show this help message")
     print("  exit,bye                               Exit")
 
