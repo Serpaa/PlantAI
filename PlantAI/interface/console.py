@@ -6,12 +6,12 @@ Created: 30.09.2025
 """
 
 import sys
-from config.loader import getConfig
+from api.OpenMeteo import getWeather
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from database.streams import exportAsCSV, importFromCSV
 from core.models import plant, species, sensor
 from core.predictions import hoursUntilDry
-from api.OpenMeteo import getWeather
+from system.loader import getConfig
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
     print("Welcome to PlantAI!")

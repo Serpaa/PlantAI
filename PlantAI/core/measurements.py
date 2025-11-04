@@ -10,9 +10,9 @@ import time
 import platform
 from adafruit_seesaw.seesaw import Seesaw
 from datetime import datetime
-from config.loader import getConfig
 from core.models import sensor, measurement
 from database.adapter import DBAdapterMeasurement
+from system.loader import getConfig
 
 class Measurements:
     def __init__(self):

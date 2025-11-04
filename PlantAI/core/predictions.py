@@ -32,7 +32,8 @@ def hoursUntilDry(allMeasurements: list[measurement]) -> int:
     y = df['minUntilDry']
 
     # Split training and test data (80/20)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    # random_state makes sure the data is always mixed the same way (only for testing)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.2)
 
     # Create pipeline with random forest model
     pipe = Pipeline([
@@ -49,7 +50,7 @@ def hoursUntilDry(allMeasurements: list[measurement]) -> int:
     print(f"Prediction: {y_pred}")
     print(f"MAE: {mae:.3f}, R²: {r2:.3f}")
 
-    # Plot der Vorhersagen
+    # Visualisation
     plt.title("Predictions (using X test values)")
     plt.scatter(X_train, y_train)
     plt.scatter(X_test, y_pred, c='m')
