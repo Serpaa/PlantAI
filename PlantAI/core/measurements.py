@@ -50,7 +50,7 @@ def readSensor(dbAdapter: DBAdapterMeasurement):
 
             elif mode == "debug":
                 # Print data directly
-                print(f"Sensor[1] - Moisture: {moisture}, Temperature: {temperature}")
+                print(f"Sensor - Moisture: {vMoisture:.2f}V = {moisture:.2f}%, Temperature: {vTemperature:.2f}V = {temperature:.2f}°C")
                 
                 # Wait until next reading
                 time.sleep(1)
