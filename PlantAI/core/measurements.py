@@ -26,9 +26,13 @@ def readSensor(dbAdapter: DBAdapterMeasurement):
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
         while True:
+            # Scale raw inputs to voltage (0..3V)
+            vMoisture = ads.toVoltage(ads.readADC(0))
+            vTemperature = ads.toVoltage(ads.readADC(1))
+
             # Scale voltage (0..3V) to moisture (0..50%) and temperature (-20..85°C)
-            moisture: float = (ads.readADC(0) * 50) / 3
-            temperature: float = (ads.readADC(1) - 0.5) * 100
+            moisture: float = (vMoisture * 50.0) / 3.0
+            temperature: float = (vTemperature - 0.5) * 100.0
 
             # Check if reading mode is interval or debug
             mode = getConfig("core", "readMode")
