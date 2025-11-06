@@ -42,7 +42,7 @@ def readSensor(dbAdapter: DBAdapterMeasurement):
                 timestamp = now.strftime("%Y/%m/%d %H:%M")
 
                 # Read moisture and temperature from SMT50
-                dbAdapter.insert(measurement(1, moisture, temperature, timestamp))
+                dbAdapter.insert(measurement(1, moisture, temperature, 0, timestamp))
 
                 # Wait until next reading
                 sleep = getConfig("core", "readIntervalSensors")
