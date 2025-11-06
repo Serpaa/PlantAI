@@ -26,6 +26,10 @@ def readSensor(dbAdapter: DBAdapterMeasurement):
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
         while True:
+            # Scale voltage (0..3V) to moisture (0..50%) and temperature (-20..85°C)
+            moisture: float = (ads.readADC(0) * 50) / 3
+            temperature: float = (ads.readADC(1) - 0.5) * 100
+
             # Check if reading mode is interval or debug
             mode = getConfig("core", "readMode")
             if mode == "interval":
@@ -34,7 +38,7 @@ def readSensor(dbAdapter: DBAdapterMeasurement):
                 timestamp = now.strftime("%Y/%m/%d %H:%M")
 
                 # Read moisture and temperature from SMT50
-                dbAdapter.insert(measurement(1, ads.readADC(0), ads.readADC(1), timestamp))
+                dbAdapter.insert(measurement(1, moisture, temperature, timestamp))
 
                 # Wait until next reading
                 sleep = getConfig("core", "readIntervalSensors")
@@ -42,7 +46,7 @@ def readSensor(dbAdapter: DBAdapterMeasurement):
 
             elif mode == "debug":
                 # Print data directly
-                print(f"Sensor[1] - Moisture: {ads.readADC(0)}, Temperature: {ads.readADC(1)}")
+                print(f"Sensor[1] - Moisture: {moisture}, Temperature: {temperature}")
                 
                 # Wait until next reading
                 time.sleep(1)
