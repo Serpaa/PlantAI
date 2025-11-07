@@ -15,7 +15,7 @@ def exportAsCSV(path: str, allMeasurements: list[measurement]):
         # Write header then all data rows
         writer.writerow(["Minutes until Dry", "Moisture", "Temperature", "Timestamp"])
         for object in allMeasurements:
-            writer.writerow([object.minUntilDry, int(object.moisture), object.temperature, object.timestamp])
+            writer.writerow([object.minUntilDry, object.moisture, object.temperature, object.timestamp])
 
 def importFromCSV(path: str, sensorId: int) -> list[measurement]:
     with open(path, newline="") as file:
