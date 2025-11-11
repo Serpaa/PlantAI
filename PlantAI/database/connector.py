@@ -5,6 +5,7 @@ Author: Tim Grundey
 Created: 25.09.2025
 """
 
+import logging
 import sqlite3
 
 class SQLiteDB:
@@ -34,6 +35,8 @@ class SQLiteDB:
                 self.cur.execute(command)
             except sqlite3.OperationalError as msg:
                 print("Command skipped: ", msg)
+        # Logs
+        logging.info("New database created.")
 
     def execute(self, query: str, values: tuple = ()):
         self.connect()

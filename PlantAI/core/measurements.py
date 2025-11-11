@@ -5,6 +5,7 @@ Author: Tim Grundey
 Created: 10.10.2025
 """
 
+import logging
 import time
 import platform
 from datetime import datetime
@@ -72,6 +73,7 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 if (watered(dbAdapter.getRecent().moisture, readMoisture())):
                     # Set minutes until dry for all previous measurements
                     setMinutesUntilDry(dbAdapter)
+                    logging.info("Watering detected, Minutes until dry set.")
 
                 # Format timestamp
                 now = datetime.now()
