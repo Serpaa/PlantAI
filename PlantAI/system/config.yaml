@@ -7,5 +7,6 @@ csv:
 
 core:
   readMode: interval
-  readIntervalSensors: 900
+  readIntervalSensors: 900 
+  wateredThreshold: 20
   

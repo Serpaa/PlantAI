@@ -12,6 +12,9 @@ from core.models import measurement
 from database.adapter import DBAdapterMeasurement
 from system.loader import getConfig
 
+# Constants
+format = "%Y/%m/%d %H:%M" # Timestamp format
+
 if "tegra" in platform.release():    
     # Initialize ADS1115 via I2C
     import ADS1x15
@@ -22,35 +25,79 @@ if "tegra" in platform.release():
 else:
     print(f"Sensor initialization skipped! (not running on Jetson Nano)")
 
-def readSensor(dbAdapter: DBAdapterMeasurement):
+def readVoltage(channel : int) -> float:
+    """Returns the current voltage [V] of channel 0..3."""
+    # Scale raw input to voltage (0..3V)
+    return ads.toVoltage(ads.readADC(channel))
+
+def readMoisture(cycle : int) -> float:
+    """Returns the current average volumetric water content [%]."""
+    # Scale voltage (0..3V) to volumetric water content (0..50%)
+    for x in range(cycle): # Return average value
+        moisture = (readVoltage(0) * 50.0) / 3.0
+        totalMoisture += moisture
+        time.sleep(1)
+    return round(totalMoisture / cycle, 2) # auf 2 Nachkommastellen runden
+
+def readTemperature(cycle : int) -> float:
+    """Returns the current average temperature [°C]."""
+    # Scale voltage (0..3V) to temperature (-20..85°C)
+    for x in range(cycle): # Return average value
+        temperature = (readVoltage(1) - 0.5) * 100.0
+        totalTemperature += temperature
+        time.sleep(1)
+    return round(totalTemperature / cycle, 2) # auf 2 Nachkommastellen runden
+
+def watered(old : float, new : float) -> bool:
+    """Returns true if moisture increased significantly between old and new measurement."""
+    threshold = getConfig("core", "wateredThreshold")
+    if new - old > threshold:
+        return True
+    else:
+        return False
+
+def saveMeasurement(dbAdapter: DBAdapterMeasurement):
+    """Saves the current moisture and temperature measurements every x minutes."""
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
         while True:
-            # Scale raw inputs to voltage (0..3V)
-            vMoisture = ads.toVoltage(ads.readADC(0))
-            vTemperature = ads.toVoltage(ads.readADC(1))
-
-            # Scale voltage (0..3V) to moisture (0..50%) and temperature (-20..85°C)
-            moisture: float = (vMoisture * 50.0) / 3.0
-            temperature: float = (vTemperature - 0.5) * 100.0
-
             # Check if reading mode is interval or debug
             mode = getConfig("core", "readMode")
             if mode == "interval":
-                # Format timestamp
-                now = datetime.now()
-                timestamp = now.strftime("%Y/%m/%d %H:%M")
-
-                # Read moisture and temperature from SMT50
-                dbAdapter.insert(measurement(1, moisture, temperature, 0, timestamp))
-
-                # Wait until next reading
+                # Wait until reading
                 sleep = getConfig("core", "readIntervalSensors")
                 time.sleep(sleep)
 
+                # Check if plant got watered since last measurement
+                if (watered(dbAdapter.getRecent().moisture, readMoisture())):
+                    # Set minutes until dry for all previous measurements
+                    setMinutesUntilDry(dbAdapter)
+
+                # Format timestamp
+                now = datetime.now()
+                timestamp = now.strftime(format)
+
+                # Read moisture and temperature from SMT50 (-1 = non-archived entry)
+                dbAdapter.insert(measurement(1, readMoisture(5), readTemperature(5), -1, timestamp))
             elif mode == "debug":
                 # Print data directly
-                print(f"Sensor - Moisture: {vMoisture:.2f}V = {moisture:.2f}%, Temperature: {vTemperature:.2f}V = {temperature:.2f}°C")
+                print(f"Sensor - Moisture: {readVoltage(0):.2f}V = {readMoisture(1)}%, Temperature: {readVoltage(1):.2f}V = {readTemperature(1)}°C")
                 
                 # Wait until next reading
                 time.sleep(1)
+
+def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
+    """Set Minutes until Dry for all non-archived measurements."""
+    # Format oldest non-archived timestamp
+    oldTime = datetime.strptime(dbAdapter.getOldest().timestamp, format)
+
+    for entry in dbAdapter.getList(1, -1):
+        # Format current timestamp
+        actTime = datetime.strptime(entry.timestamp, format)
+
+        # Calculate minutes until dry
+        sekUntilDry = oldTime - actTime
+        minUntilDry = sekUntilDry.total_seconds / 60
+
+        # Update every measurement
+        dbAdapter.update(entry.measureId, minUntilDry)

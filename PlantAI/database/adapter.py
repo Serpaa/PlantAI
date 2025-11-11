@@ -114,15 +114,35 @@ class DBAdapterMeasurement(DBAdapter):
     def __init__(self, db: SQLiteDB):
         self.db = db
 
-    def getList(self, where: int, limit: int) -> list[measurement]:
-        # Get the most recent measurements then sort them from old -> new
+    def getRecent(self, sensor: int) -> measurement:
+        """Returns the most recent measurement."""
         query = """
-        SELECT * FROM (
-            SELECT * FROM measurements WHERE sensorId = ? 
-            ORDER BY timestamp DESC 
-            LIMIT ?) 
-        ORDER BY timestamp"""
-        values = (where, limit)
+            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = -1
+            ORDER BY timestamp DESC
+            LIMIT 1
+            """
+        values = (sensor,)
+        return self.db.execute(query, values)
+
+    def getOldest(self, sensor: int) -> measurement:
+        """Returns the oldest non-archived measurement."""
+        query = """
+            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = -1
+            ORDER BY timestamp ASC
+            LIMIT 1
+            """
+        values = (sensor,)
+        return self.db.execute(query, values)
+
+    def getList(self, sensor: int, limit: int) -> list[measurement]:
+        """Returns a list with the most recent non-archived measurements sorted from old to new."""
+        query = """
+            SELECT * FROM (
+                SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = -1
+                ORDER BY timestamp DESC 
+                LIMIT ?) 
+            ORDER BY timestamp"""
+        values = (sensor, limit)
         allMeasurements = []
 
         # Create a list of measurements
@@ -132,16 +152,19 @@ class DBAdapterMeasurement(DBAdapter):
         return allMeasurements
 
     def insert(self, data: measurement):
+        """Inserts a new measurement."""
         query = "INSERT INTO measurements (sensorId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
         values = (data.sensorId, data.moisture, data.temperature, data.minUntilDry, data.timestamp)
         self.db.execute(query, values)
 
-    def update(self, data: measurement):
-        query = "UPDATE measurements SET sensorId = ?, moisture = ?, temperature = ?, minUntilDry = ?, timestamp = ? WHERE measureId = ?"
-        values = (data.sensorId, data.moisture, data.temperature, data.minUntilDry, data.timestamp, data.measureId)
+    def update(self, id: int, min: int):
+        """Updates minUntilDry for the chosen measureId."""
+        query = "UPDATE measurements SET minUntilDry = ? WHERE measureId = ?"
+        values = (id, min)
         self.db.execute(query, values)
 
     def delete(self, data: int):
+        """Deletes all measurements for the chosen sensorId."""
         query = "DELETE FROM measurements WHERE sensorId = ?"
         values = (data,)
         self.db.execute(query, values)
