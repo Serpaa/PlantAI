@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from core.models import measurement
 
 def hoursUntilDry(allMeasurements: list[measurement]) -> int:
+    """Returns a date when the plant has to be watered again based on predictions."""
     # Fill lists with data
     listMinUntilDry = []; listMoisture = []
     for measurement in allMeasurements:
@@ -33,7 +34,7 @@ def hoursUntilDry(allMeasurements: list[measurement]) -> int:
 
     # Split training and test data (80/20)
     # random_state makes sure the data is always mixed the same way (only for testing)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=42)
 
     # Create pipeline with random forest model
     pipe = Pipeline([

@@ -15,6 +15,7 @@ from core.predictions import hoursUntilDry
 from system.loader import getConfig
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
+    """Main Menu of the console interface."""
     print("Welcome to PlantAI!")
     while True:
         # Wait for user input
@@ -72,6 +73,7 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
 
 # Add new entry
 def addEntry(dbAdapter: DBAdapter):
+    """Add a new entry to the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a name:")
         userInputName = input(">>> ")
@@ -108,6 +110,7 @@ def addEntry(dbAdapter: DBAdapter):
 
 # Delete entry
 def deleteEntry(dbAdapter: DBAdapter):
+    """Deletes the selected entry from the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a plant to delete (ID):")
         userInput = input(">>> ")
@@ -133,6 +136,7 @@ def deleteEntry(dbAdapter: DBAdapter):
 
 # Show entries
 def showEntry(dbAdapter: DBAdapter):
+    """Prints all entries from a specific table."""
     if isinstance(dbAdapter, DBAdapterPlant):
         print("[ID | Species (ID) | Sensor (ID) | Name]")
         print("----------------------------------------")
@@ -158,7 +162,7 @@ def showEntry(dbAdapter: DBAdapter):
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies) or isinstance(dbAdapter, DBAdapterSensor):
         result = dbAdapter.getList()
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        result = dbAdapter.getList(where=int(userInputId), limit=int(userInputEntries))
+        result = dbAdapter.getList(sensor=int(userInputId), limit=int(userInputEntries))
 
     # Print all objects
     for object in result:
@@ -166,6 +170,7 @@ def showEntry(dbAdapter: DBAdapter):
 
 # Import entry
 def importEntry(dbAdapter: DBAdapter):
+    """Imports measurements of the selected sensor as CSV."""
     print("Choose a sensor to import (ID):")
     userInputId = input(">>> ")
 
@@ -177,11 +182,12 @@ def importEntry(dbAdapter: DBAdapter):
 
 # Export entry
 def exportEntry(dbAdapter: DBAdapter):
+    """Exports measurements of the selected sensor as CSV."""
     print("Choose a sensor to export (ID):")
     userInputId = input(">>> ")
     
     # Get all objects from database (-1 = unlimited)
-    result = dbAdapter.getList(where=int(userInputId), limit=int(-1))
+    result = dbAdapter.getList(sensor=int(userInputId), limit=int(-1))
 
     # Create export
     path = getConfig("csv", "export")
@@ -189,11 +195,13 @@ def exportEntry(dbAdapter: DBAdapter):
     print("Export successful!")
 
 # Predictions
-def predict(dbAdapter: DBAdapter):
-    hoursUntilDry(dbAdapter.getList(where=1, limit=int(-1)))
+def predict(dbAdapter: DBAdapterMeasurement):
+    """Predicts in how many hours the plant has to be watered again."""
+    hoursUntilDry(dbAdapter.getCompleteList(sensor=1, limit=int(-1)))
 
 # Show weather
 def weather():
+    """Prints a weather forecast of the selected location."""
     print("Choose a location:")
     userInput = input(">>> ")
 
@@ -205,6 +213,7 @@ def weather():
 
 # Show help
 def help():
+    """Prints the help menu."""
     print("Available commands:")
     print("  add [plant,species,sensor]             Add a new plant, species or sensor")
     print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
@@ -217,10 +226,12 @@ def help():
 
 # Unknown command
 def unknown():
+    """Prints unknown command."""
     print("Unknown command. Type 'help' for a list of commands.")
 
 # Exit
 def bye():
+    """Exits the system."""
     print("Goodbye!")
     logging.info("System shutdown.")
     sys.exit() 

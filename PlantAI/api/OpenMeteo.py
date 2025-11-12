@@ -10,6 +10,7 @@ from geopy.distance import geodesic
 
 # Open-Meteo Weather API
 def getWeather(location: str):
+    """Returns a current weather forecast based on the chosen location."""
     # Get coordinates for location
     latitude : float; longitude : float
     latitude, longitude = geocode(location)
@@ -47,6 +48,7 @@ def getWeather(location: str):
 
 # Open-Meteo Geocoding API
 def geocode(location: str):
+    """Returns latitute and longitude based on the chosen location."""
     # Create URL and send API request
     url = f"https://geocoding-api.open-meteo.com/v1/search?name={location}&count=1&language=de"
     response = requests.get(url)

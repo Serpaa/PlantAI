@@ -10,6 +10,7 @@ import logging
 from core.models import measurement
 
 def exportAsCSV(path: str, allMeasurements: list[measurement]):
+    """Exports a list of measurements as CSV."""
     with open(path, "w", newline="") as file:
         writer = csv.writer(file)
 
@@ -21,6 +22,7 @@ def exportAsCSV(path: str, allMeasurements: list[measurement]):
     logging.info("CSV export created.")
 
 def importFromCSV(path: str, sensorId: int) -> list[measurement]:
+    """Returns a list of measurements from CSV."""
     with open(path, newline="") as file:
         reader = csv.reader(file)
         next(reader) # skip header row

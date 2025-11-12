@@ -15,10 +15,12 @@ class SQLiteDB:
         cur = None
 
     def connect(self):
+        """Connects to the SQLite Database."""
         self.con = sqlite3.connect(self.db_path)
         self.cur = self.con.cursor()
 
     def create(self):
+        """Creates a new SQLite Database."""
         self.connect()
 
         # Read SQL file
@@ -39,6 +41,7 @@ class SQLiteDB:
         logging.info("New database created.")
 
     def execute(self, query: str, values: tuple = ()):
+        """Executes an SQL query and returns it's result."""
         self.connect()
         self.cur.execute(query, values)
         self.con.commit()
@@ -52,4 +55,5 @@ class SQLiteDB:
         return self.cur.fetchall()
 
     def close(self):
+        """Closes the connection to the SQLite Database."""
         self.con.close()
