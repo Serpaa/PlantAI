@@ -70,7 +70,7 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 time.sleep(sleep)
 
                 # Check if plant got watered since last measurement
-                if (watered(dbAdapter.getRecent().moisture, readMoisture())):
+                if (watered(dbAdapter.getRecent(1).moisture, readMoisture(1))):
                     # Set minutes until dry for all previous measurements
                     setMinutesUntilDry(dbAdapter)
                     logging.info("Watering detected, Minutes until dry set.")
