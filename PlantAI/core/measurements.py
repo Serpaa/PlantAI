@@ -91,15 +91,15 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
 def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
     """Set Minutes until Dry for all non-archived measurements."""
     # Format oldest non-archived timestamp
-    oldTime = datetime.strptime(dbAdapter.getOldest().timestamp, format)
+    oldTime = datetime.strptime(dbAdapter.getOldest(1).timestamp, format)
 
-    for entry in dbAdapter.getList(1, -1):
+    for entry in dbAdapter.getList(sensor=1, limit=-1):
         # Format current timestamp
         actTime = datetime.strptime(entry.timestamp, format)
 
         # Calculate minutes until dry
-        sekUntilDry = oldTime - actTime
-        minUntilDry = sekUntilDry.total_seconds / 60
+        sekUntilDry = actTime - oldTime
+        minUntilDry = sekUntilDry.total_seconds() / 60.0
 
         # Update every measurement
         dbAdapter.update(entry.measureId, minUntilDry)

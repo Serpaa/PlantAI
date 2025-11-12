@@ -117,28 +117,36 @@ class DBAdapterMeasurement(DBAdapter):
     def getRecent(self, sensor: int) -> measurement:
         """Returns the most recent measurement."""
         query = """
-            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = -1
+            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = '-1'
             ORDER BY timestamp DESC
             LIMIT 1
             """
         values = (sensor,)
-        return self.db.execute(query, values)
+        
+        # Convert result to measurement
+        for result in self.db.execute(query, values):
+                return measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
+                                   temperature=result[3], minUntilDry=result[4], timestamp=result[5])
 
     def getOldest(self, sensor: int) -> measurement:
         """Returns the oldest non-archived measurement."""
         query = """
-            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = -1
+            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = '-1'
             ORDER BY timestamp ASC
             LIMIT 1
             """
         values = (sensor,)
-        return self.db.execute(query, values)
+
+        # Convert result to measurement
+        for result in self.db.execute(query, values):
+                return measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
+                                   temperature=result[3], minUntilDry=result[4], timestamp=result[5])
 
     def getList(self, sensor: int, limit: int) -> list[measurement]:
         """Returns a list with the most recent non-archived measurements sorted from old to new."""
         query = """
             SELECT * FROM (
-                SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = -1
+                SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = '-1'
                 ORDER BY timestamp DESC 
                 LIMIT ?) 
             ORDER BY timestamp"""
@@ -146,9 +154,28 @@ class DBAdapterMeasurement(DBAdapter):
         allMeasurements = []
 
         # Create a list of measurements
-        for entry in self.db.execute(query, values):
+        for result in self.db.execute(query, values):
             allMeasurements.append(
-                measurement(measureId=entry[0], sensorId=entry[1], moisture=entry[2], temperature=entry[3], minUntilDry=entry[4], timestamp=entry[5]))
+                measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
+                            temperature=result[3], minUntilDry=result[4], timestamp=result[5]))
+        return allMeasurements
+
+    def getCompleteList(self, sensor: int, limit: int) -> list[measurement]:
+        """Returns a list with all archived measurements sorted from old to new."""
+        query = """
+            SELECT * FROM (
+                SELECT * FROM measurements WHERE sensorId = ? AND NOT minUntilDry = '-1'
+                ORDER BY timestamp DESC 
+                LIMIT ?) 
+            ORDER BY timestamp"""
+        values = (sensor, limit)
+        allMeasurements = []
+
+        # Create a list of measurements
+        for result in self.db.execute(query, values):
+            allMeasurements.append(
+                measurement(measureId=result[0], sensorId=result[1], moisture=result[2], 
+                            temperature=result[3], minUntilDry=result[4], timestamp=result[5]))
         return allMeasurements
 
     def insert(self, data: measurement):
@@ -160,7 +187,7 @@ class DBAdapterMeasurement(DBAdapter):
     def update(self, id: int, min: int):
         """Updates minUntilDry for the chosen measureId."""
         query = "UPDATE measurements SET minUntilDry = ? WHERE measureId = ?"
-        values = (id, min)
+        values = (min, id)
         self.db.execute(query, values)
 
     def delete(self, data: int):
