@@ -69,8 +69,12 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 sleep = getConfig("core", "readIntervalSensors")
                 time.sleep(sleep)
 
+                # Check if recent measurement exists
+                recentMeasurement = dbAdapter.getRecent(1)
+                if recentMeasurement is None:
+                    logging.info("No recent measurement found. Watering check skipped.")
                 # Check if plant got watered since last measurement
-                if (watered(dbAdapter.getRecent(1).moisture, readMoisture(1))):
+                elif watered(recentMeasurement.moisture, readMoisture(1)):
                     # Set minutes until dry for all previous measurements
                     setMinutesUntilDry(dbAdapter)
                     logging.info("Watering detected, Minutes until dry set.")
@@ -90,16 +94,21 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
 
 def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
     """Set Minutes until Dry for all non-archived measurements."""
-    # Format oldest non-archived timestamp
-    oldTime = datetime.strptime(dbAdapter.getOldest(1).timestamp, format)
+    # Check if old measurement exists
+    oldMeasurement = dbAdapter.getOldest(1)
+    if oldMeasurement is None:
+        logging.info("No oldest measurement found. Setting minutes until dry skipped.")
+    else:
+        # Format oldest non-archived timestamp
+        oldTime = datetime.strptime(dbAdapter.getOldest(1).timestamp, format)
 
-    for entry in dbAdapter.getList(sensor=1, limit=-1):
-        # Format current timestamp
-        actTime = datetime.strptime(entry.timestamp, format)
+        for entry in dbAdapter.getList(sensor=1, limit=-1):
+            # Format current timestamp
+            actTime = datetime.strptime(entry.timestamp, format)
 
-        # Calculate minutes until dry
-        sekUntilDry = actTime - oldTime
-        minUntilDry = sekUntilDry.total_seconds() / 60.0
+            # Calculate minutes until dry
+            sekUntilDry = actTime - oldTime
+            minUntilDry = sekUntilDry.total_seconds() / 60.0
 
-        # Update every measurement
-        dbAdapter.update(entry.measureId, minUntilDry)
+            # Update every measurement
+            dbAdapter.update(entry.measureId, minUntilDry)

@@ -124,9 +124,12 @@ class DBAdapterMeasurement(DBAdapter):
         values = (sensor,)
         
         # Convert result to measurement
-        for result in self.db.execute(query, values):
-                return measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
-                                   temperature=result[3], minUntilDry=result[4], timestamp=result[5])
+        result = self.db.execute(query, values)
+        if result is None:
+            return None
+        else:
+            return measurement(measureId=result[0][0],sensorId=result[0][1], moisture=result[0][2], 
+                               temperature=result[0][3], minUntilDry=result[0][4], timestamp=result[0][5])
 
     def getOldest(self, sensor: int) -> measurement:
         """Returns the oldest non-archived measurement."""
@@ -137,10 +140,13 @@ class DBAdapterMeasurement(DBAdapter):
             """
         values = (sensor,)
 
-        # Convert result to measurement
-        for result in self.db.execute(query, values):
-                return measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
-                                   temperature=result[3], minUntilDry=result[4], timestamp=result[5])
+         # Convert result to measurement
+        result = self.db.execute(query, values)
+        if result is None:
+            return None
+        else:
+            return measurement(measureId=result[0][0],sensorId=result[0][1], moisture=result[0][2], 
+                               temperature=result[0][3], minUntilDry=result[0][4], timestamp=result[0][5])
 
     def getList(self, sensor: int, limit: int) -> list[measurement]:
         """Returns a list with the most recent non-archived measurements sorted from old to new."""
