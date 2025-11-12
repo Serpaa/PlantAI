@@ -100,7 +100,7 @@ def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
         logging.info("No oldest measurement found. Setting minutes until dry skipped.")
     else:
         # Format oldest non-archived timestamp
-        oldTime = datetime.strptime(dbAdapter.getOldest(1).timestamp, format)
+        oldTime = datetime.strptime(oldMeasurement.timestamp, format)
 
         for entry in dbAdapter.getList(sensor=1, limit=-1):
             # Format current timestamp
