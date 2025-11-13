@@ -144,9 +144,9 @@ class DBAdapterMeasurement(DBAdapter):
 
         # Select WHERE clause
         if mode == "archived":
-            whereClause = "AND minUntilDry = '-1'"
-        elif mode == "current":
             whereClause = "AND minUntilDry != '-1'"
+        elif mode == "current":
+            whereClause = "AND minUntilDry = '-1'"
         elif mode == "all":
             whereClause = ""
 

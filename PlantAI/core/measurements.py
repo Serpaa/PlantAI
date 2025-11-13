@@ -78,8 +78,8 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 # Check if plant got watered since last measurement
                 elif watered(recentMeasurement.moisture, readMoisture(1)):
                     # Set minutes until dry for all previous measurements
+                    logging.info("Watering detected.")
                     setMinutesUntilDry(dbAdapter)
-                    logging.info("Watering detected, Minutes until dry set.")
 
                 # Format timestamp
                 now = datetime.now()
@@ -114,3 +114,6 @@ def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
 
             # Update every measurement
             dbAdapter.update(entry.measureId, minUntilDry)
+            
+        # Logging
+        logging.info("Minutes until dry set.")
