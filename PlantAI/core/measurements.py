@@ -34,6 +34,7 @@ def readVoltage(channel : int) -> float:
 def readMoisture(cycle : int) -> float:
     """Returns the current average volumetric water content [%]."""
     # Scale voltage (0..3V) to volumetric water content (0..50%)
+    totalMoisture : float
     for x in range(cycle): # Return average value
         moisture = (readVoltage(0) * 50.0) / 3.0
         totalMoisture += moisture
@@ -43,6 +44,7 @@ def readMoisture(cycle : int) -> float:
 def readTemperature(cycle : int) -> float:
     """Returns the current average temperature [°C]."""
     # Scale voltage (0..3V) to temperature (-20..85°C)
+    totalTemperature : float
     for x in range(cycle): # Return average value
         temperature = (readVoltage(1) - 0.5) * 100.0
         totalTemperature += temperature
