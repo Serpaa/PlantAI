@@ -79,7 +79,7 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 elif watered(recentMeasurement.moisture, readMoisture(1)):
                     # Set minutes until dry for all previous measurements
                     logging.info("Watering detected.")
-                    setMinutesUntilDry(dbAdapter)
+                    setMinutesUntilDry(dbAdapter, recentMeasurement)
 
                 # Format timestamp
                 now = datetime.now()
@@ -94,26 +94,21 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 # Wait until next reading
                 time.sleep(1)
 
-def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
+def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement, recentMeasurement : measurement):
     """Set Minutes until Dry for all non-archived measurements."""
-    # Check if old measurement exists
-    oldMeasurement = dbAdapter.getSingle(sensor=1, mode="old")
-    if oldMeasurement is None:
-        logging.info("No oldest measurement found. Setting minutes until dry skipped.")
-    else:
-        # Format oldest non-archived timestamp
-        oldTime = datetime.strptime(oldMeasurement.timestamp, format)
+    # Format recent timestamp
+    recentTime = datetime.strptime(recentMeasurement.timestamp, format)
 
-        for entry in dbAdapter.getList(sensor=1, limit=-1, mode="current"):
-            # Format current timestamp
-            actTime = datetime.strptime(entry.timestamp, format)
+    for entry in dbAdapter.getList(sensor=1, limit=-1, mode="current"):
+        # Format current timestamp
+        actTime = datetime.strptime(entry.timestamp, format)
 
-            # Calculate minutes until dry
-            sekUntilDry = actTime - oldTime
-            minUntilDry = sekUntilDry.total_seconds() / 60.0
+        # Calculate minutes until dry
+        sekUntilDry = recentTime - actTime
+        minUntilDry = sekUntilDry.total_seconds() / 60.0
 
-            # Update every measurement
-            dbAdapter.update(entry.measureId, minUntilDry)
+        # Update every measurement
+        dbAdapter.update(entry.measureId, minUntilDry)
             
-        # Logging
-        logging.info("Minutes until dry set.")
+    # Logging
+    logging.info("Minutes until dry set.")
