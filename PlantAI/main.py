@@ -9,7 +9,7 @@ import logging
 import os
 import threading
 from core.measurements import saveMeasurement
-from database.connector import SQLiteDB
+from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.console import mainMenu
 from system.loader import getConfig
@@ -20,19 +20,16 @@ logging.basicConfig(
     format='%(asctime)s: %(levelname)s - %(message)s'
 )
 
-# Initialize database connection
-dbURL = getConfig("database","path")
-db = SQLiteDB(dbURL)
-
 # Create database if it doesn't exist
-if not os.path.exists(dbURL):
-    db.create()
+dbPath = getConfig("database","path")
+if not os.path.exists(dbPath):
+    createDB()
 
 # Initialize database adapters
-dbAdapterPlant = DBAdapterPlant(db)
-dbAdapterSpecies = DBAdapterSpecies(db)
-dbAdapterSensor = DBAdapterSensor(db)
-dbAdapterMeasurement = DBAdapterMeasurement(db)
+dbAdapterPlant = DBAdapterPlant()
+dbAdapterSpecies = DBAdapterSpecies()
+dbAdapterSensor = DBAdapterSensor()
+dbAdapterMeasurement = DBAdapterMeasurement()
 
 # Start new thread for reading sensor data
 thread = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)

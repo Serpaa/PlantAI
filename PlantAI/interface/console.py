@@ -162,14 +162,14 @@ def showEntry(dbAdapter: DBAdapter):
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies) or isinstance(dbAdapter, DBAdapterSensor):
         result = dbAdapter.getList()
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        result = dbAdapter.getList(sensor=int(userInputId), limit=int(userInputEntries))
+        result = dbAdapter.getList(sensor=int(userInputId), limit=int(userInputEntries), mode="all")
 
     # Print all objects
     for object in result:
         print(object.__str__())
 
 # Import entry
-def importEntry(dbAdapter: DBAdapter):
+def importEntry(dbAdapter: DBAdapterMeasurement):
     """Imports measurements of the selected sensor as CSV."""
     print("Choose a sensor to import (ID):")
     userInputId = input(">>> ")
@@ -181,13 +181,13 @@ def importEntry(dbAdapter: DBAdapter):
     print("Import successful!")
 
 # Export entry
-def exportEntry(dbAdapter: DBAdapter):
+def exportEntry(dbAdapter: DBAdapterMeasurement):
     """Exports measurements of the selected sensor as CSV."""
     print("Choose a sensor to export (ID):")
     userInputId = input(">>> ")
     
     # Get all objects from database (-1 = unlimited)
-    result = dbAdapter.getList(sensor=int(userInputId), limit=int(-1))
+    result = dbAdapter.getList(sensor=int(userInputId), limit=int(-1), mode="all")
 
     # Create export
     path = getConfig("csv", "export")
@@ -197,7 +197,7 @@ def exportEntry(dbAdapter: DBAdapter):
 # Predictions
 def predict(dbAdapter: DBAdapterMeasurement):
     """Predicts in how many hours the plant has to be watered again."""
-    hoursUntilDry(dbAdapter.getCompleteList(sensor=1, limit=int(-1)))
+    hoursUntilDry(dbAdapter.getList(sensor=1, limit=int(-1), mode="archived"))
 
 # Show weather
 def weather():

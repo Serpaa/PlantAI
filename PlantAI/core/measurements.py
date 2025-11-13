@@ -70,7 +70,7 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 time.sleep(sleep)
 
                 # Check if recent measurement exists
-                recentMeasurement = dbAdapter.getRecent(1)
+                recentMeasurement = dbAdapter.getSingle(sensor=1, mode="recent")
                 if recentMeasurement is None:
                     logging.info("No recent measurement found. Watering check skipped.")
                 # Check if plant got watered since last measurement
@@ -95,14 +95,14 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
 def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement):
     """Set Minutes until Dry for all non-archived measurements."""
     # Check if old measurement exists
-    oldMeasurement = dbAdapter.getOldest(1)
+    oldMeasurement = dbAdapter.getSingle(sensor=1, mode="old")
     if oldMeasurement is None:
         logging.info("No oldest measurement found. Setting minutes until dry skipped.")
     else:
         # Format oldest non-archived timestamp
         oldTime = datetime.strptime(oldMeasurement.timestamp, format)
 
-        for entry in dbAdapter.getList(sensor=1, limit=-1):
+        for entry in dbAdapter.getList(sensor=1, limit=-1, mode="current"):
             # Format current timestamp
             actTime = datetime.strptime(entry.timestamp, format)
 

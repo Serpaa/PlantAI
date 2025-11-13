@@ -7,53 +7,64 @@ Created: 25.09.2025
 
 import logging
 import sqlite3
+from system.loader import getConfig
 
-class SQLiteDB:
-    def __init__(self, db_path: str):
-        self.db_path = db_path
-        con = None
-        cur = None
+def connect():
+    """Connect to the SQLite Database."""
+    path = getConfig("database","path")
+    con = sqlite3.connect(path)
+    return con, con.cursor()
 
-    def connect(self):
-        """Connects to the SQLite Database."""
-        self.con = sqlite3.connect(self.db_path)
-        self.cur = self.con.cursor()
+def createDB():
+    """Creates a new SQLite Database."""
+    # Read SQL file
+    file = open("PlantAI/database/PlantAI.sql", "r")
+    sqlFile = file.read()
+    file.close()
 
-    def create(self):
-        """Creates a new SQLite Database."""
-        self.connect()
+    # Split SQL commands
+    sqlCommands = sqlFile.split(";")
 
-        # Read SQL file
-        file = open("PlantAI/database/PlantAI.sql", "r")
-        sqlFile = file.read()
-        file.close()
+    # Execute each command
+    con, cur = connect()
+    for command in sqlCommands:
+        try:
+            cur.execute(command)
+        except sqlite3.OperationalError as msg:
+            print("Command skipped: ", msg)
+    cur.close()
 
-        # Split SQL commands
-        sqlCommands = sqlFile.split(";")
+    # Logs
+    logging.info("New database created.")
 
-        # Execute each command
-        for command in sqlCommands:
-            try:
-                self.cur.execute(command)
-            except sqlite3.OperationalError as msg:
-                print("Command skipped: ", msg)
-        # Logs
-        logging.info("New database created.")
+def execute(query: str, values: tuple = ()):
+    """Executes an SQL query without returning a value."""
+    con, cur = connect()
+    cur.execute(query, values)
+    con.commit()
 
-    def execute(self, query: str, values: tuple = ()):
-        """Executes an SQL query and returns it's result."""
-        self.connect()
-        self.cur.execute(query, values)
-        self.con.commit()
+    # Raise exception if no rows were affected
+    if cur.rowcount == 0:
+        cur.close()
+        raise Exception("No matching entry found.")
+    cur.close()
 
-        if "DELETE" or "UPDATE" in query:
-            # Raise exception if no rows were affected during a DELETE query
-            if self.cur.rowcount == 0:
-                raise Exception("No matching entry found.")
-        
-        # Return results for SELECT query
-        return self.cur.fetchall()
+def fetchone(query: str, values: tuple = ()):
+    """Executes an SQL query and returns one entry."""
+    con, cur = connect()
+    cur.execute(query, values)
+    
+    # Return result
+    result = cur.fetchone()
+    cur.close()
+    return result
 
-    def close(self):
-        """Closes the connection to the SQLite Database."""
-        self.con.close()
+def fetchall(query: str, values: tuple = ()):
+    """Executes an SQL query and returns a list."""
+    con, cur = connect()
+    cur.execute(query, values)
+    
+    # Return result
+    result = cur.fetchall()
+    cur.close()
+    return result
