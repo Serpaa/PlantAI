@@ -23,7 +23,7 @@ logging.basicConfig(
 # Create database if it doesn't exist
 dbPath = getConfig("database","path")
 if not os.path.exists(dbPath):
-    createDB()
+    createDB("PlantAI/database/PlantAI.sql")
 
 # Initialize database adapters
 dbAdapterPlant = DBAdapterPlant()

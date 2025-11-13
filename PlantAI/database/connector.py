@@ -15,10 +15,10 @@ def connect():
     con = sqlite3.connect(path)
     return con, con.cursor()
 
-def createDB():
+def createDB(path: str):
     """Creates a new SQLite Database."""
     # Read SQL file
-    file = open("PlantAI/database/PlantAI.sql", "r")
+    file = open(path, "r")
     sqlFile = file.read()
     file.close()
 
