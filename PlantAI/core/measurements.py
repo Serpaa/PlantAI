@@ -72,6 +72,7 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                 time.sleep(sleep)
 
                 # Check if recent measurement exists
+                skipInsert = False
                 recentMeasurement = dbAdapter.getSingle(sensor=1, mode="recent")
                 if recentMeasurement is None:
                     logging.info("No recent measurement found. Watering check skipped.")
@@ -80,13 +81,16 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                     # Set minutes until dry for all previous measurements
                     logging.info("Watering detected.")
                     setMinutesUntilDry(dbAdapter, recentMeasurement)
+                    skipInsert = True
 
-                # Format timestamp
-                now = datetime.now()
-                timestamp = now.strftime(format)
+                # Skip insert after minutes until dry were set
+                if not skipInsert:
+                    # Format timestamp
+                    now = datetime.now()
+                    timestamp = now.strftime(format)
 
-                # Read moisture and temperature from SMT50 (-1 = non-archived entry)
-                dbAdapter.insert(measurement(1, readMoisture(5), readTemperature(5), -1, timestamp))
+                    # Read moisture and temperature from SMT50 (-1 = non-archived entry)
+                    dbAdapter.insert(measurement(1, readMoisture(5), readTemperature(5), -1, timestamp))
             elif mode == "debug":
                 # Print data directly
                 print(f"Sensor - Moisture: {readVoltage(0):.2f}V = {readMoisture(1)}%, Temperature: {readVoltage(1):.2f}V = {readTemperature(1)}°C")
