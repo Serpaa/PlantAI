@@ -1,0 +1,11 @@
+database:
+  path: PlantAI/database/PlantAI.db
+
+csv:
+  import: PlantAI/database/measurements.csv
+  export: PlantAI/database/measurements.csv
+
+core:
+  readMode: interval
+  readIntervalSensors: 900
+  wateredThreshold: 20

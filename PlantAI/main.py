@@ -5,40 +5,38 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
+import logging
 import os
 import threading
-from config.loader import getConfig
-from core.measurements import Measurements
-from database.DBConnector import SQLiteDB
-from database.DBAdapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from interface.hmi import hmiConsole
+from core.measurements import saveMeasurement
+from database.connector import createDB
+from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from interface.console import mainMenu
+from system.loader import getConfig
 
-# Initialize database connection
-dbURL = getConfig("database","path")
-db = SQLiteDB(dbURL)
+# Create log file
+logging.basicConfig(
+    filename='PlantAI/system/plantai.log', filemode='a', level=logging.INFO,
+    format='%(asctime)s: %(levelname)s - %(message)s'
+)
 
 # Create database if it doesn't exist
-if not os.path.exists(dbURL):
-    db.create()
+dbPath = getConfig("database","path")
+if not os.path.exists(dbPath):
+    createDB("PlantAI/database/PlantAI.sql")
 
 # Initialize database adapters
-dbAdapterPlant = DBAdapterPlant(db)
-dbAdapterSpecies = DBAdapterSpecies(db)
-dbAdapterSensor = DBAdapterSensor(db)
-dbAdapterMeasurement = DBAdapterMeasurement(db)
+dbAdapterPlant = DBAdapterPlant()
+dbAdapterSpecies = DBAdapterSpecies()
+dbAdapterSensor = DBAdapterSensor()
+dbAdapterMeasurement = DBAdapterMeasurement()
 
-# Get all sensors from database
-measurements = Measurements()
-allSensors = dbAdapterSensor.getList()
+# Start new thread for reading sensor data
+thread = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)
+thread.start()
 
-if len(allSensors) > 0:
-    # Initialize each sensor
-    measurements.initSensor(allSensors)
-
-    # Start new thread for reading sensor data
-    thread = threading.Thread(target=measurements.read, args=(dbAdapterMeasurement,), daemon=True)
-    thread.start()
+# Logs
+logging.info("System booted.")
 
 # Initialize Console
-hmi = hmiConsole(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)
-hmi.selection()
+mainMenu(dbAdapterPlant, dbAdapterSpecies, dbAdapterSensor, dbAdapterMeasurement)

@@ -7,7 +7,8 @@ Created: 25.09.2025
 
 CREATE TABLE IF NOT EXISTS species (
     speciesId INTEGER PRIMARY KEY,
-    name VARCHAR(40)
+    name VARCHAR(40),
+    minMoisture FLOAT
 );
 
 CREATE TABLE IF NOT EXISTS sensors (
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS measurements (
     sensorId INTEGER,
     moisture FLOAT,
     temperature FLOAT,
-    timestamp datetime,
+    minUntilDry INTEGER,
+    timestamp VARCHAR(15),
     FOREIGN KEY (sensorId) REFERENCES sensors(sensorId)
 );
