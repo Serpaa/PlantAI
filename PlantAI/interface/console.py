@@ -10,8 +10,9 @@ import sys
 from api.OpenMeteo import getWeather
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from database.streams import exportAsCSV, importFromCSV
+from core.measurements import readMoisture
 from core.models import plant, species, sensor
-from core.predictions import hoursUntilDry
+from core.predictions import trainModel, predictTimeUntilDry
 from system.loader import getConfig
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
@@ -60,8 +61,13 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 exportEntry(dbAdapterMeasurement)
             else:
                 unknown()
-        elif userInput == "predict":
-            predict(dbAdapterMeasurement)
+        elif "model" in userInput:
+            if "train" in userInput:
+                train(dbAdapterMeasurement)
+            elif "predict" in userInput:
+                predict()
+            else:
+                unknown()
         elif userInput == "weather":
             weather()
         elif userInput == "help":
@@ -194,10 +200,20 @@ def exportEntry(dbAdapter: DBAdapterMeasurement):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
+# Train model
+def train(dbAdapter : DBAdapterMeasurement):
+    trainModel(dbAdapter)
+
 # Predictions
-def predict(dbAdapter: DBAdapterMeasurement):
-    """Predicts in how many hours the plant has to be watered again."""
-    hoursUntilDry(dbAdapter.getList(sensor=1, limit=int(-1), mode="archived"))
+def predict():
+    """Predicts in how many minutes the plant has to be watered again."""
+    print("Current moisture (0.0 = use sensor data):")
+    userInput = input(">>> ")
+
+    if userInput == 0.0:
+        predictTimeUntilDry(readMoisture(1))
+    else:
+        predictTimeUntilDry(userInput)
 
 # Show weather
 def weather():
@@ -219,7 +235,7 @@ def help():
     print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
     print("  show [plant,species,sensor,measure]    Show all plants, species, sensors or measurements")
     print("  csv [import,export]                    Imports or exports all measurements using CSV")
-    print("  predict                                Predict in how many hours the plant soil is dry")
+    print("  model [train,predict]                  Manually train the model or predict minUntilDry")
     print("  weather                                Show weather forecast")
     print("  help                                   Show this help message")
     print("  exit,bye                               Exit")

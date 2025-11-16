@@ -10,6 +10,7 @@ import time
 import platform
 from datetime import datetime
 from core.models import measurement
+from core.predictions import trainModel
 from database.adapter import DBAdapterMeasurement
 from system.loader import getConfig
 
@@ -81,6 +82,9 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                     # Set minutes until dry for all previous measurements
                     logging.info("Watering detected.")
                     setMinutesUntilDry(dbAdapter, recentMeasurement)
+
+                    # Train model using the now archived measurements
+                    trainModel(dbAdapter)
                     skipInsert = True
 
                 # Skip insert after minutes until dry were set
