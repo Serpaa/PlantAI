@@ -8,12 +8,11 @@ Created: 31.10.2025
 import logging
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import timedelta
+from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
-from core.models import measurement
 from database.adapter import DBAdapterMeasurement
 
 # Prepare pipeline
@@ -39,6 +38,9 @@ def trainModel(dbAdapter : DBAdapterMeasurement):
     df = pd.DataFrame(data)
     X = df[['moisture']]
     y = df['minUntilDry']
+
+    # Save DataFrame as png
+    plot(df)
 
     # Split training and test data (80/20)
     # random_state makes sure the data is always mixed the same way (only for testing)
@@ -77,3 +79,21 @@ def predictTimeUntilDry(curMoisture : float) -> int:
     logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
     print(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
     return days, hours
+
+def plot(df : pd.DataFrame):
+    """Saves the DataFrame as a PNG."""
+    # Create plot from DataFrame
+    plt.figure(figsize=(12, 5), dpi=250)
+    plt.plot(df["minUntilDry"], df["moisture"])
+    plt.xlabel("Minutes until Dry")
+    plt.ylabel("Moisture")
+    plt.title("Measurements")
+    plt.tight_layout()
+
+    # Format and create timestamp
+    format = "%Y%m%d_%H%M%S"
+    now = datetime.now()
+    timestamp = now.strftime(format)
+
+    # Save plot as PNG
+    plt.savefig(f"PlantAI/system/moisture_{timestamp}.png")

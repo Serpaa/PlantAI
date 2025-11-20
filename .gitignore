@@ -209,6 +209,7 @@ __marimo__/
 # Database and exports
 *.db
 *.csv
+*.png
 
 # macOS system files
 .DS_Store
