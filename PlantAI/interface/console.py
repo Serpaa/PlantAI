@@ -13,7 +13,6 @@ from database.streams import exportAsCSV, importFromCSV
 from core.measurements import readMoisture
 from core.models import plant, species, sensor
 from core.predictions import trainModel, predictTimeUntilDry
-from system.loader import getConfig
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
     """Main Menu of the console interface."""
@@ -181,7 +180,7 @@ def importEntry(dbAdapter: DBAdapterMeasurement):
     userInputId = input(">>> ")
 
     # Insert new data into database
-    path = getConfig("csv", "import")
+    path = "PlantAI/resources/measurements.csv"
     for entry in importFromCSV(path=path, sensorId=userInputId):
         dbAdapter.insert(entry)
     print("Import successful!")
@@ -196,7 +195,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement):
     result = dbAdapter.getList(sensor=int(userInputId), limit=int(-1), mode="all")
 
     # Create export
-    path = getConfig("csv", "export")
+    path = "PlantAI/resources/measurements.csv"
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 

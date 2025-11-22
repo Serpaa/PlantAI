@@ -13,7 +13,6 @@ from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.console import mainMenu
 from interface.vad import detect
-from system.loader import getConfig
 
 # Create log file
 logging.basicConfig(
@@ -22,7 +21,7 @@ logging.basicConfig(
 )
 
 # Create database if it doesn't exist
-dbPath = getConfig("database","path")
+dbPath = "PlantAI/database/PlantAI.db"
 if not os.path.exists(dbPath):
     createDB("PlantAI/database/PlantAI.sql")
 
