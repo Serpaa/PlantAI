@@ -54,7 +54,7 @@ def readTemperature(cycle : int) -> float:
 
 def watered(old : float, new : float) -> bool:
     """Returns true if moisture increased significantly between old and new measurement."""
-    threshold = getConfig("core", "wateredThreshold")
+    threshold = getConfig("core", "measurements", "wateredThreshold")
     if new - old > threshold:
         return True
     else:
@@ -66,10 +66,10 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
     if "tegra" in platform.release():
         while True:
             # Check if reading mode is interval or debug
-            mode = getConfig("core", "readMode")
+            mode = getConfig("core", "measurements", "readMode")
             if mode == "interval":
                 # Wait until reading
-                sleep = getConfig("core", "readIntervalSensors")
+                sleep = getConfig("core", "measurements", "readIntervalSensors")
                 time.sleep(sleep)
 
                 # Check if recent measurement exists

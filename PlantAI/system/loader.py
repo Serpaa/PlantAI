@@ -7,8 +7,8 @@ Created: 14.10.2025
 
 import yaml
 
-def getConfig(dir1: str, dir2: str):
+def getConfig(dir1: str, dir2: str, data: str):
     """Returns a value stored in the config file under a certain path."""
     with open("PlantAI/system/config.yaml") as stream:
         config = yaml.safe_load(stream)
-        return config[dir1][dir2]
+        return config[dir1][dir2][data]

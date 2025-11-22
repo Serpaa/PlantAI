@@ -13,8 +13,8 @@ from silero_vad import load_silero_vad, get_speech_timestamps
 from system.loader import getConfig
 
 # Configuration
-SAMPLE_RATE = getConfig("vad", "sampleRate")
-CHUNK = getConfig("vad", "chunk")
+SAMPLE_RATE = getConfig("interface", "vad", "sampleRate")
+CHUNK = getConfig("interface", "vad", "chunk")
 
 # Load Silero VAD model
 model = load_silero_vad()
