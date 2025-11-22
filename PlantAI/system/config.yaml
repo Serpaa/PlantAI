@@ -9,3 +9,7 @@ core:
   readMode: interval
   readIntervalSensors: 900
   wateredThreshold: 20
+
+vad:
+  sampleRate: 16000
+  chunk: 1024

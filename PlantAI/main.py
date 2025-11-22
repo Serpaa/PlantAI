@@ -12,11 +12,12 @@ from core.measurements import saveMeasurement
 from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.console import mainMenu
+from interface.vad import detect
 from system.loader import getConfig
 
 # Create log file
 logging.basicConfig(
-    filename='PlantAI/system/plantai.log', filemode='a', level=logging.INFO,
+    filename='PlantAI/resources/plantai.log', filemode='a', level=logging.INFO,
     format='%(asctime)s: %(levelname)s - %(message)s'
 )
 
@@ -32,8 +33,12 @@ dbAdapterSensor = DBAdapterSensor()
 dbAdapterMeasurement = DBAdapterMeasurement()
 
 # Start new thread for reading sensor data
-thread = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)
-thread.start()
+threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)
+threadSensor.start()
+
+# Start new thread for voice detection
+threadVAD = threading.Thread(target=detect, daemon=True)
+threadVAD.start()
 
 # Logs
 logging.info("System booted.")
