@@ -8,7 +8,9 @@ Created: 22.11.2025
 import logging
 import numpy as np
 import pyaudio
+import time
 import wave
+from interface.stt import convert
 from silero_vad import load_silero_vad, get_speech_timestamps
 from system.loader import getConfig
 
@@ -21,6 +23,8 @@ model = load_silero_vad()
 
 def detect():
     """Continously records audio and checks for voice."""
+    speechDetected : bool; listSpeech = []
+
     # Init PyAudio and open audio stream
     pa = pyaudio.PyAudio()
     stream = pa.open(
@@ -47,13 +51,38 @@ def detect():
 
         # Voice has been detected
         if len(speech) > 0:
+            # Combine all chunks as list
+            listSpeech.append(audioChunk)
+
+            # Record time when speech was detected
+            speechDetected = True
+            lastSpeech = time.time()
+
             # Read start and end frame
             startFrame = speech[0]["start"]
             endFrame = speech[0]["end"]
 
             # Log result and play audio
-            logging.info(f"Voice detected - Frame: {startFrame} - {endFrame}")
-            play('PlantAI/resources/sound/activate.wav')
+            if (not speechDetected):
+                logging.info(f"Speech detected - Frame: {startFrame} - {endFrame}")
+                play('PlantAI/resources/sound/activate.wav')
+        else:
+            now = time.time()
+            pause = getConfig("interface", "vad", "speechPause")
+
+            # Detect when speech has ended
+            # by comparing current time and last time speech was detected
+            if (speechDetected and ((now - lastSpeech) > pause)):
+                speechDetected = False
+
+                # Turn speech list into string
+                separator = ''
+                combinedSpeech = separator.join(listSpeech)
+                listSpeech.clear()
+
+                # Hand over raw speech to STT
+                convertedSpeech = convert(combinedSpeech)
+                logging.info(f"Speech recorded: {convertedSpeech}")
 
     # Close audio stream
     stream.close()

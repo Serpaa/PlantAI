@@ -8,3 +8,4 @@ interface:
   vad:
     sampleRate: 16000
     chunk: 1024
+    speechPause: 2
