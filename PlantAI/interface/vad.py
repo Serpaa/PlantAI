@@ -10,20 +10,26 @@ import numpy as np
 import pyaudio
 import time
 import wave
-from interface.stt import convert
+import interface.stt as stt
+import interface.tts as tts
 from silero_vad import load_silero_vad, get_speech_timestamps
 from system.loader import getConfig
 
 # Configuration
 SAMPLE_RATE = getConfig("interface", "vad", "sampleRate")
 CHUNK = getConfig("interface", "vad", "chunk")
+PAUSE = getConfig("interface", "vad", "speechPause")
+TIMEOUT = getConfig("interface", "vad", "wakewordTimeout")
+WAKEWORD = getConfig("interface", "vad", "wakeword")
 
 # Load Silero VAD model
 model = load_silero_vad()
 
 def detect():
     """Continously records audio and checks for voice."""
-    speechDetected : bool; listSpeech = []
+    speechDetected = False; lastSpeech = 0
+    wakewordDetected = False; lastWakeword = 0
+    listSpeech = []
 
     # Init PyAudio and open audio stream
     pa = pyaudio.PyAudio()
@@ -35,7 +41,7 @@ def detect():
         output=True,
         frames_per_buffer=CHUNK)
     
-    while True:
+    while not tts.active():
         # Seperate audio into chunks
         audioChunk = stream.read(num_frames=SAMPLE_RATE, exception_on_overflow=False)
 
@@ -54,39 +60,56 @@ def detect():
             # Combine all chunks as list
             listSpeech.append(audioChunk)
 
+            # Log result and play audio
+            if (not speechDetected):
+                logging.info(f"Voice detected! Start recording ...")
+
             # Record time when speech was detected
             speechDetected = True
             lastSpeech = time.time()
-
-            # Read start and end frame
-            startFrame = speech[0]["start"]
-            endFrame = speech[0]["end"]
-
-            # Log result and play audio
-            if (not speechDetected):
-                logging.info(f"Speech detected - Frame: {startFrame} - {endFrame}")
-                play('PlantAI/resources/sound/activate.wav')
         else:
+            # Record current time
             now = time.time()
-            pause = getConfig("interface", "vad", "speechPause")
 
             # Detect when speech has ended
             # by comparing current time and last time speech was detected
-            if (speechDetected and ((now - lastSpeech) > pause)):
-                speechDetected = False
+            if speechDetected:
+                if (now - lastSpeech) > PAUSE:
+                    speechDetected = False
 
-                # Turn speech list into string
-                separator = ''
-                combinedSpeech = separator.join(listSpeech)
-                listSpeech.clear()
+                    # Turn speech list into string
+                    separator = b''
+                    combinedSpeech = separator.join(listSpeech)
+                    listSpeech.clear()
 
-                # Hand over raw speech to STT
-                convertedSpeech = convert(combinedSpeech)
-                logging.info(f"Speech recorded: {convertedSpeech}")
+                    # Hand over raw speech to STT
+                    convertedSpeech = stt.convert(combinedSpeech)
+
+                    # Choose if speech is wakeword or command
+                    if wakewordDetected:
+                        wakewordDetected = False
+                        logging.info(f"Command recorded: {convertedSpeech}")
+                    else:
+                        logging.info(f"Wakeword recorded: {convertedSpeech}")
+
+                        # Detect wakeword
+                        if WAKEWORD in convertedSpeech:
+                            # Record time when wakeword was detected
+                            wakewordDetected = True
+                            lastWakeword = time.time()
+
+                            # Play activation sound
+                            play('PlantAI/resources/sound/activate.wav')
+                            logging.info(f"Wakeword detected! Waiting for command ...")
+            elif wakewordDetected:
+                # Reset wakeword after timeout
+                if (now - lastWakeword) > TIMEOUT:
+                    wakewordDetected = False
+                    logging.warning(f"Command timeout after {TIMEOUT}s")
 
     # Close audio stream
     stream.close()
-    p.terminate()
+    pa.terminate()
 
 def play(path: str):
     """Plays the wave file located at the selected path."""

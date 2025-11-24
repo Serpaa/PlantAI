@@ -20,3 +20,16 @@ model_tts, example_text = torch.hub.load(
     language='en',
     speaker='v3_en'
 )
+
+def convert(text: str):
+    return model_tts.apply_tts(
+        text=text,
+        speaker='en_0',
+        sample_rate=24000
+    )
+
+def play():
+    pass
+
+def active() -> bool:
+    pass

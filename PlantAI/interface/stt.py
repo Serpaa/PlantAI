@@ -23,14 +23,14 @@ model_stt, decoder, utils = torch.hub.load(
 )
 (read_batch, split_into_batches, read_audio, prepare_model_input) = utils
 
-def convert(rawSpeech: bytes) -> str:
+def convert(speech: bytes) -> str:
     # Save temporary wave file
     path = "PlantAI/resources/sound/tempSTT.wav"
     with wave.open(path, 'wb') as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)  # 16-bit
         wf.setframerate(SAMPLE_RATE)
-        wf.writeframes(rawSpeech)
+        wf.writeframes(speech)
 
     # Read temporary wave file and convert to text
     audio_tensor = read_audio(path)
