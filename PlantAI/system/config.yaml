@@ -9,3 +9,7 @@ interface:
     sampleRate: 16000
     chunk: 1024
     speechPause: 2
+  stt:
+    device: cpu
+  tts:
+    device: cpu
