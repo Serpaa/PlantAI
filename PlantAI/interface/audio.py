@@ -1,17 +1,20 @@
 """
 Description:
-    Voice activity detection (VAD) using Silero Models.
+    Audio control using Silero Models:
+        - Voice activity detection (VAD)
+        - Speech-to-Text (STT) conversion
+        - Text-to-Speech (TTS) conversion
 Author: Tim Grundey
-Created: 22.11.2025
+Created: 26.11.2025
 """
 
 import logging
 import numpy as np
+import os
 import pyaudio
 import time
 import wave
-import interface.stt as stt
-import interface.tts as tts
+from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
 from system.loader import getConfig
 
@@ -21,12 +24,43 @@ CHUNK = getConfig("interface", "vad", "chunk")
 PAUSE = getConfig("interface", "vad", "speechPause")
 TIMEOUT = getConfig("interface", "vad", "wakewordTimeout")
 WAKEWORD = getConfig("interface", "vad", "wakeword")
+DEVICE_TTS = getConfig("interface", "tts", "device")
+DEVICE_STT = getConfig("interface", "stt", "device")
 
-# Load Silero VAD model
+# Load Silero models
+# Voice activity detection
 model = load_silero_vad()
 
-def detect():
-    """Continously records audio and checks for voice."""
+# Save current directory
+# Move to resources for saving Silero config
+cwd = os.getcwd()
+os.chdir("PlantAI/resources")
+
+# Speech-to-Text
+model_stt, decoder, utils = silero_stt(
+    language='en'
+)
+
+# Text-to-Speech
+model_tts, example_text = silero_tts(
+    language='en',
+    speaker='v3_en',
+)
+
+# Return to previous directory
+os.chdir(cwd)
+
+# Get STT utils
+(read_batch, split_into_batches, read_audio, prepare_model_input) = utils
+
+# Set device (GPU or CPU)
+model_tts.to(DEVICE_TTS)
+model_stt.to(DEVICE_STT)
+
+def vad():
+    """
+    Records audio and checks for voice activity.
+    """
     speechDetected = False; lastSpeech = 0
     wakewordDetected = False; lastWakeword = 0
     listSpeech = []
@@ -41,7 +75,7 @@ def detect():
         output=True,
         frames_per_buffer=CHUNK)
     
-    while not tts.active():
+    while True:
         # Seperate audio into chunks
         audioChunk = stream.read(num_frames=SAMPLE_RATE, exception_on_overflow=False)
 
@@ -83,7 +117,7 @@ def detect():
                     listSpeech.clear()
 
                     # Hand over raw speech to STT
-                    convertedSpeech = stt.convert(combinedSpeech)
+                    convertedSpeech = stt(combinedSpeech)
 
                     # Choose if speech is wakeword or command
                     if wakewordDetected:
@@ -100,6 +134,7 @@ def detect():
 
                             # Play activation sound
                             play('PlantAI/resources/sound/activate.wav')
+                            tts("Hello Tim!")
                             logging.info(f"Wakeword detected! Waiting for command ...")
             elif wakewordDetected:
                 # Reset wakeword after timeout
@@ -111,8 +146,64 @@ def detect():
     stream.close()
     pa.terminate()
 
+def stt(speech: bytes) -> str:
+    """
+    Speech-to-Text conversion using a temporary wave file.
+    
+    :param speech: Raw speech to be converted.
+    :type speech: bytes
+    """
+
+    # Save temporary wave file
+    path = "PlantAI/resources/sound/tempSTT.wav"
+    with wave.open(path, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)  # 16-bit
+        wf.setframerate(SAMPLE_RATE)
+        wf.writeframes(speech)
+
+    # Read temporary wave file and convert to text
+    audio_tensor = read_audio(path)
+    input_data = prepare_model_input([audio_tensor], device=DEVICE_STT)
+    output = model_stt(input_data)
+    text = decoder(output[0])
+
+    # Remove temporary file
+    if os.path.exists(path):
+        os.remove(path)
+
+    return text.strip()
+
+def tts(text: str):
+    """
+    Text-to-Speech conversion using a temporary wave file.
+    
+    :param text: Text to be converted.
+    :type text: str
+    """
+    # Save temporary wave file
+    path = "PlantAI/resources/sound/tempTTS.wav"
+    model_tts.save_wav(
+        text=text,
+        speaker='en_0',
+        sample_rate=24000,
+        audio_path=path
+    )
+
+    # Play audio
+    play(path)
+
+    # Remove temporary file
+    if os.path.exists(path):
+        os.remove(path)
+
 def play(path: str):
-    """Plays the wave file located at the selected path."""
+    """
+    Plays the wave file located at the selected path.
+    
+    :param path: Path to the wave file.
+    :type path: str
+    """
     with wave.open(path, 'rb') as wf:
         # Init PyAudio and open audio stream
         pa = pyaudio.PyAudio()

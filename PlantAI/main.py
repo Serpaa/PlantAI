@@ -11,8 +11,8 @@ import threading
 from core.measurements import saveMeasurement
 from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from interface.audio import vad
 from interface.console import mainMenu
-from interface.vad import detect
 
 # Create log file
 logging.basicConfig(
@@ -36,7 +36,7 @@ threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasureme
 threadSensor.start()
 
 # Start new thread for voice detection
-threadVAD = threading.Thread(target=detect, daemon=True)
+threadVAD = threading.Thread(target=vad, daemon=True)
 threadVAD.start()
 
 # Logs

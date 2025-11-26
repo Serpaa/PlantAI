@@ -215,3 +215,6 @@ __marimo__/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Silero config
+latest_silero_models.yml
