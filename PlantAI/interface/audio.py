@@ -152,6 +152,9 @@ def stt(speech: bytes) -> str:
     
     :param speech: Raw speech to be converted.
     :type speech: bytes
+
+    :return: Converted text.
+    :rtype: string
     """
 
     # Save temporary wave file
