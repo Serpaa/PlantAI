@@ -5,8 +5,10 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
+import re
 from ollama import chat
 from ollama import ChatResponse
+from num2words import num2words
 
 def question(prompt: str, data) -> str:
     """
@@ -22,11 +24,12 @@ def question(prompt: str, data) -> str:
     # Build system message with rules
     sysContent = (
         "System rules (follow these strictly):"
+            "- You are a voice assistant."
             "- Answer in exactly one short sentence."
             "- No additional comments.")
     
     # Build user message
-    userContent = f"'{prompt}' using current time: '{data}' "
+    userContent = f"'{prompt}' using additional information: '{data}' "
 
     # Send message to model
     response: ChatResponse = chat(model='llama3.2', messages=[
@@ -34,5 +37,5 @@ def question(prompt: str, data) -> str:
         {'role': 'user', 'content': userContent}
     ])
 
-    # Return response
-    return response.message.content
+    # Convert all numbers to words and return
+    return re.sub(r'\d+', lambda m: num2words(int(m.group())), response.message.content)
