@@ -16,6 +16,7 @@ import time
 import wave
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
+from interface.assistant import respond
 from system.loader import getConfig
 
 # Configuration
@@ -123,6 +124,9 @@ def vad():
                     if wakewordDetected:
                         wakewordDetected = False
                         logging.info(f"Command recorded: {convertedSpeech}")
+
+                        # Respond to command
+                        respond(convertedSpeech)
                     else:
                         logging.info(f"Wakeword recorded: {convertedSpeech}")
 
@@ -134,7 +138,6 @@ def vad():
 
                             # Play activation sound
                             play('PlantAI/resources/sound/activate.wav')
-                            tts("Hello Tim!")
                             logging.info(f"Wakeword detected! Waiting for command ...")
             elif wakewordDetected:
                 # Reset wakeword after timeout
