@@ -32,7 +32,7 @@ if "tegra" in platform.release():
     # Set the max. Voltage to be measured
     ads.setGain(ads.PGA_4_096V)
 else:
-    print(f"Sensor initialization skipped! (not running on Jetson Nano)")
+    logging.warning("Sensor initialization skipped! (not running on Jetson Nano)")
 
 def readVoltage(channel : int) -> float:
     """Returns the current voltage [V] of channel 0..3."""

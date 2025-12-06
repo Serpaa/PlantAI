@@ -5,7 +5,13 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
+# Create log file before importing any other files
 import logging
+logging.basicConfig(
+    filename='PlantAI/resources/plantai.log', filemode='a', level=logging.INFO,
+    format='%(asctime)s: %(levelname)s - %(message)s'
+)
+
 import os
 import threading
 from core.measurements import saveMeasurement
@@ -14,12 +20,6 @@ from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.audio import vad
 from interface.console import mainMenu
-
-# Create log file
-logging.basicConfig(
-    filename='PlantAI/resources/plantai.log', filemode='a', level=logging.INFO,
-    format='%(asctime)s: %(levelname)s - %(message)s'
-)
 
 # Create database if it doesn't exist
 dbPath = "PlantAI/database/PlantAI.db"
