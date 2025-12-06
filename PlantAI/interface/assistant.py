@@ -5,7 +5,6 @@ Author: Tim Grundey
 Created: 05.11.2025
 """
 
-import logging
 import interface.audio as audio
 import interface.llm as llm
 from datetime import datetime
@@ -36,7 +35,3 @@ def respond(speech: str):
     # Send speech to LLM and respond
     response = llm.question(prompt, data)
     audio.tts(response)
-
-    # Some logging
-    logging.info(f"Prompt: {prompt}; Additional data: {data}")
-    logging.info(f"Response created: {response}")

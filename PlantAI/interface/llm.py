@@ -5,6 +5,7 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
+import logging
 import re
 from ollama import chat
 from ollama import ChatResponse
@@ -39,6 +40,10 @@ def question(prompt: str, data) -> str:
         {'role': 'system', 'content': sysContent},
         {'role': 'user', 'content': userContent}
     ])
+
+    # Some logging
+    logging.info(f"Prompt: {userContent}")
+    logging.info(f"Response created: {response.message.content}")
 
     # Convert all numbers to words and return
     return re.sub(r'\d+', lambda m: num2words(int(m.group())), response.message.content)
