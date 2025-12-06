@@ -29,7 +29,10 @@ def question(prompt: str, data) -> str:
             "- No additional comments.")
     
     # Build user message
-    userContent = f"'{prompt}' using additional information: '{data}' "
+    if data is None:
+        userContent = prompt
+    else:
+        userContent = f"'{prompt}' using additional information: '{data}'"
 
     # Send message to model
     response: ChatResponse = chat(model='llama3.2', messages=[

@@ -30,7 +30,7 @@ def respond(speech: str):
         prompt = speech
     else:
         # Unknown command
-        data = "None"
+        data = None
         prompt = "Tell the user you apologize and can't help with that."
 
     # Send speech to LLM and respond
