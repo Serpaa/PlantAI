@@ -9,6 +9,7 @@ import logging
 import os
 import threading
 from core.measurements import saveMeasurement
+from core.measurements import trainModel
 from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.audio import vad
@@ -38,6 +39,9 @@ threadSensor.start()
 # Start new thread for voice detection
 threadVAD = threading.Thread(target=vad, daemon=True)
 threadVAD.start()
+
+# Train model
+trainModel(dbAdapterMeasurement)
 
 # Logs
 logging.info("System booted.")
