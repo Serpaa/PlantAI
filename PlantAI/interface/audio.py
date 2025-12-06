@@ -222,6 +222,10 @@ def play(path: str):
         while len(data := wf.readframes(CHUNK)):
             stream.write(data)
 
+        # Short delay to prevent pop sound
+        time.sleep(0.5)
+
         # Close audio stream
+        stream.stop_stream()
         stream.close()
         pa.terminate()
