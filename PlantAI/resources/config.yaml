@@ -9,7 +9,6 @@ interface:
     sampleRate: 16000
     chunk: 1024
     speechPause: 1
-    wakeword: bella
     wakewordTimeout: 5
   stt:
     device: cpu

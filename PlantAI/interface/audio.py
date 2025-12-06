@@ -20,11 +20,11 @@ from interface.assistant import respond
 from system.loader import getConfig
 
 # Configuration
+WAKEWORD = ("bella", "ella", "bell")
 SAMPLE_RATE = getConfig("interface", "vad", "sampleRate")
 CHUNK = getConfig("interface", "vad", "chunk")
 PAUSE = getConfig("interface", "vad", "speechPause")
 TIMEOUT = getConfig("interface", "vad", "wakewordTimeout")
-WAKEWORD = getConfig("interface", "vad", "wakeword")
 DEVICE_TTS = getConfig("interface", "tts", "device")
 DEVICE_STT = getConfig("interface", "stt", "device")
 
@@ -131,7 +131,7 @@ def vad():
                         logging.info(f"Wakeword recorded: {convertedSpeech}")
 
                         # Detect wakeword
-                        if WAKEWORD in convertedSpeech:
+                        if any(word in convertedSpeech for word in WAKEWORD):
                             # Record time when wakeword was detected
                             wakewordDetected = True
                             lastWakeword = time.time()
