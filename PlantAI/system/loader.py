@@ -1,14 +1,13 @@
 """
 Description:
-    Loads the config file and returns specific entries
+    Loads the yaml config file and returns the stream.
 Author: Tim Grundey
 Created: 14.10.2025
 """
 
 import yaml
 
-def getConfig(dir1: str, dir2: str, data: str):
-    """Returns a value stored in the config file under a certain path."""
+def getConfig():
+    """Returns the config stream."""
     with open("PlantAI/resources/config.yaml") as stream:
-        config = yaml.safe_load(stream)
-        return config[dir1][dir2][data]
+        return yaml.safe_load(stream)

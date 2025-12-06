@@ -20,13 +20,17 @@ from interface.assistant import respond
 from system.loader import getConfig
 
 # Configuration
+stream = getConfig()
+config = stream["interface"]
+
+# Constants
 WAKEWORD = ("bella", "ella", "bell")
-SAMPLE_RATE = getConfig("interface", "vad", "sampleRate")
-CHUNK = getConfig("interface", "vad", "chunk")
-PAUSE = getConfig("interface", "vad", "speechPause")
-TIMEOUT = getConfig("interface", "vad", "wakewordTimeout")
-DEVICE_TTS = getConfig("interface", "tts", "device")
-DEVICE_STT = getConfig("interface", "stt", "device")
+SAMPLE_RATE = config["vad"]["sampleRate"]
+CHUNK = config["vad"]["chunk"]
+PAUSE = config["vad"]["speechPause"]
+TIMEOUT = config["vad"]["wakewordTimeout"]
+DEVICE_TTS = config["tts"]["device"]
+DEVICE_STT = config["stt"]["device"]
 
 # Load Silero models
 # Voice activity detection
