@@ -181,9 +181,13 @@ def importEntry(dbAdapter: DBAdapterMeasurement):
 
     # Insert new data into database
     path = "PlantAI/resources/measurements.csv"
-    for entry in importFromCSV(path=path, sensorId=userInputId):
-        dbAdapter.insert(entry)
-    print("Import successful!")
+    try:
+        for entry in importFromCSV(path=path, sensorId=userInputId):
+            dbAdapter.insert(entry)
+        print("Import successful!")
+    except FileNotFoundError:
+        print(f"Import failed! No measurement file found.")
+        logging.error(f"Import failed! No such file: {path}")
 
 # Export entry
 def exportEntry(dbAdapter: DBAdapterMeasurement):
