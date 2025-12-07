@@ -214,9 +214,14 @@ def predict():
     userInput = input(">>> ")
 
     if userInput == 0.0:
-        predictTimeUntilDry(readMoisture(1))
+        curMoisture = readMoisture(1)
+        days, hours = predictTimeUntilDry(curMoisture)
     else:
-        predictTimeUntilDry(userInput)
+        curMoisture = userInput
+        days, hours = predictTimeUntilDry(curMoisture)
+
+    # Print result
+    print(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
 
 # Show weather
 def weather():

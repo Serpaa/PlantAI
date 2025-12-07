@@ -25,7 +25,8 @@ def respond(speech: str):
         prompt = speech
     elif "water" in speech:
         # Get days until watered
-        data = f"Time until plants has to be watered again: {predictTimeUntilDry(readMoisture(1))}"
+        days, hours = predictTimeUntilDry(readMoisture(1))
+        data = f"Time until plant has to be watered again: {days} days and {hours} hours."
         prompt = speech
     else:
         # Unknown command

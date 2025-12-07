@@ -80,7 +80,6 @@ def predictTimeUntilDry(curMoisture : float) -> int:
 
     # Log and return result
     logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
-    print(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
     return days, hours
 
 def plot(df : pd.DataFrame):
