@@ -5,15 +5,20 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
-# Create log file before importing any other files
-import logging
-logging.basicConfig(
-    filename='PlantAI/resources/plantai.log', filemode='a', level=logging.INFO,
-    format='%(asctime)s: %(levelname)s - %(message)s'
-)
-
 import os
+import logging
 import threading
+
+# Create archive folder for logs
+archivePath = "PlantAI/resources/archive"
+if not os.path.exists(archivePath):
+    os.mkdir(archivePath)
+
+# Create log file
+from system.streams import initLog
+initLog("PlantAI/resources", "plantai.log")
+
+# Import all other files
 from core.measurements import saveMeasurement
 from core.measurements import trainModel
 from database.connector import createDB

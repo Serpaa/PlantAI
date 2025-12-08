@@ -17,10 +17,10 @@ import wave
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
 from interface.assistant import respond
-from system.loader import getConfig
+from system.streams import importConfigFromYAML
 
 # Configuration
-stream = getConfig()
+stream = importConfigFromYAML()
 config = stream["interface"]
 
 # Constants

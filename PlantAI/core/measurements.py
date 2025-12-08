@@ -12,10 +12,10 @@ from datetime import datetime
 from core.models import measurement
 from core.predictions import trainModel
 from database.adapter import DBAdapterMeasurement
-from system.loader import getConfig
+from system.streams import importConfigFromYAML
 
 # Configuration
-stream = getConfig()
+stream = importConfigFromYAML()
 config = stream["core"]["measurements"]
 
 # Constants

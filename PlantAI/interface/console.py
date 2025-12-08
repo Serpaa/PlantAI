@@ -9,10 +9,10 @@ import logging
 import sys
 from api.OpenMeteo import getWeather
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from database.streams import exportAsCSV, importFromCSV
 from core.measurements import readMoisture
 from core.models import plant, species, sensor
 from core.predictions import trainModel, predictTimeUntilDry
+from system.streams import exportAsCSV, importFromCSV
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
     """Main Menu of the console interface."""
