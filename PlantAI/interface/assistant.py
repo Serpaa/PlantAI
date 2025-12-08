@@ -1,8 +1,8 @@
 """
 Description:
-    Voice assistant ...
+    Voice assistant waits for keywords and responds using the LLM.
 Author: Tim Grundey
-Created: 05.11.2025
+Created: 05.12.2025
 """
 
 import interface.audio as audio
