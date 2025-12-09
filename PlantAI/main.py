@@ -19,8 +19,7 @@ from system.streams import initLog
 initLog("PlantAI/resources", "plantai.log")
 
 # Import all other files
-from core.measurements import saveMeasurement
-from core.measurements import trainModel
+from core.measurements import saveMeasurement, trainModel
 from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from interface.audio import vad
