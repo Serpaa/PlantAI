@@ -7,7 +7,6 @@ Created: 21.10.2025
 
 import csv, yaml
 import logging
-from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from core.models import measurement
 

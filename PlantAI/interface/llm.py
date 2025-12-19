@@ -6,8 +6,7 @@ Created: 26.11.2025
 """
 
 import logging
-from ollama import chat
-from ollama import ChatResponse
+from ollama import chat, ChatResponse
 
 def question(prompt: str, data) -> str:
     """
