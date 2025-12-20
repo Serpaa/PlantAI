@@ -8,10 +8,7 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
-# Mute all ALSA stderr messages before importing pyaudio
-from system.streams import importConfigFromYAML, muteALSA
-muteALSA()
-
+import ctypes
 import logging
 import numpy as np
 import os
@@ -21,6 +18,7 @@ import wave
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
 from interface.assistant import respond
+from system.streams import importConfigFromYAML
 
 # Configuration
 stream = importConfigFromYAML()
@@ -72,6 +70,17 @@ def vad():
     speechDetected = False; lastSpeech = 0
     wakewordDetected = False; lastWakeword = 0
     listSpeech = []
+
+    ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p)
+    
+    def py_error_handler(filename, line, function, err, fmt):
+        pass
+    
+    c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+    asound = ctypes.cdll.LoadLibrary('libasound.so')
+
+    # Set error handler
+    asound.snd_lib_error_set_handler(c_error_handler)
 
     # Init PyAudio and open audio stream
     pa = pyaudio.PyAudio()
