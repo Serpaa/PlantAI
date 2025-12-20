@@ -5,6 +5,7 @@ Author: Tim Grundey
 Created: 21.10.2025
 """
 
+import ctypes
 import csv, yaml
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -100,3 +101,25 @@ def initLog(path: str, name: str):
         handlers=[handler],
         format='%(asctime)s: %(levelname)s - %(message)s'
     )
+
+def muteALSA():
+    ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(
+        None,
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_char_p
+    )
+
+    def py_error_handler(filename, line, function, err, fmt):
+        pass  # ignore messages
+
+    c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+
+    try:
+        asound = ctypes.cdll.LoadLibrary('libasound.so')
+        asound.snd_lib_error_set_handler(c_error_handler)
+    except OSError:
+        pass
+    
