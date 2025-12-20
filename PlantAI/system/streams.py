@@ -125,7 +125,7 @@ def muteALSA():
 
     try:
         asound = ctypes.cdll.LoadLibrary('libasound.so')
-        asound.snd_lib_error_set_handler(c_error_handler)
+        asound.snd_lib_log_set_handler(c_error_handler)
     except OSError:
         pass
     
