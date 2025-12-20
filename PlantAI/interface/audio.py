@@ -8,6 +8,10 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
+# Mute all ALSA stderr messages before importing pyaudio
+from system.streams import importConfigFromYAML, muteALSA
+muteALSA()
+
 import logging
 import numpy as np
 import os
@@ -17,7 +21,6 @@ import wave
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
 from interface.assistant import respond
-from system.streams import importConfigFromYAML, muteALSA
 
 # Configuration
 stream = importConfigFromYAML()
@@ -31,9 +34,6 @@ PAUSE = config["vad"]["speechPause"]
 TIMEOUT = config["vad"]["wakewordTimeout"]
 DEVICE_TTS = config["tts"]["device"]
 DEVICE_STT = config["stt"]["device"]
-
-# Mute all ALSA stderr messages
-muteALSA()
 
 # Load Silero models
 # Voice activity detection
