@@ -8,13 +8,13 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
-import ctypes
 import logging
 import numpy as np
 import os
 import pyaudio
 import time
 import wave
+from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
 from interface.assistant import respond
@@ -71,15 +71,17 @@ def vad():
     wakewordDetected = False; lastWakeword = 0
     listSpeech = []
 
-    ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p)
-    
+    # New function used as ALSA error handler
+    # this prevents ALSA from flooding the terminal with stderr warnings on every boot
     def py_error_handler(filename, line, function, err, fmt):
         pass
     
+    # Convert function to C and load library
+    ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
     c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
-    asound = ctypes.cdll.LoadLibrary('libasound.so')
 
-    # Set error handler
+    # Load library and set error handler
+    asound = cdll.LoadLibrary('libasound.so')
     asound.snd_lib_error_set_handler(c_error_handler)
 
     # Init PyAudio and open audio stream
