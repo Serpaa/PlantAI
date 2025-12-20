@@ -71,12 +71,12 @@ def vad():
     wakewordDetected = False; lastWakeword = 0
     listSpeech = []
 
-    # New function used as ALSA error handler
+    # Custom function used as ALSA error handler
     # this prevents ALSA from flooding the terminal with stderr warnings on every boot
     def py_error_handler(filename, line, function, err, fmt):
         pass
     
-    # Convert function to C and load library
+    # Convert function from Python to C
     ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
     c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
 
