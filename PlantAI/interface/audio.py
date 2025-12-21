@@ -35,6 +35,7 @@ DEVICE_STT = config["stt"]["device"]
 
 # Load Silero models
 # Voice activity detection
+print("Loading Silero VAD...", end="\r")
 model = load_silero_vad()
 
 # Save current directory
@@ -43,15 +44,18 @@ cwd = os.getcwd()
 os.chdir("PlantAI/resources")
 
 # Speech-to-Text
+print("Loading Silero STT...", end="\r")
 model_stt, decoder, utils = silero_stt(
     language='en'
 )
 
 # Text-to-Speech
+print("Loading Silero TTS...", end="\r")
 model_tts, example_text = silero_tts(
     language='en',
     speaker='v3_en',
 )
+print("Finished loading Silero models!")
 
 # Return to previous directory
 os.chdir(cwd)
