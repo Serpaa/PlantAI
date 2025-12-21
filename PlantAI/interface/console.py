@@ -5,8 +5,7 @@ Author: Tim Grundey
 Created: 30.09.2025
 """
 
-import logging
-import sys
+import logging, sys
 from api.OpenMeteo import getWeather
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from core.measurements import readMoisture

@@ -5,8 +5,7 @@ Author: Tim Grundey
 Created: 25.09.2025
 """
 
-import logging
-import sqlite3
+import logging, sqlite3
 
 def connect():
     """Connect to the SQLite Database."""

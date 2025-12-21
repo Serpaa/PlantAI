@@ -5,9 +5,7 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
-import os
-import logging
-import threading
+import os, logging, threading
 
 # Create archive folder for logs
 archivePath = "PlantAI/resources/archive"

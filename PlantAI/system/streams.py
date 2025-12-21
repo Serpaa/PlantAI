@@ -5,8 +5,7 @@ Author: Tim Grundey
 Created: 21.10.2025
 """
 
-import csv, yaml
-import logging
+import csv, yaml, logging
 from logging.handlers import TimedRotatingFileHandler
 from core.models import measurement
 

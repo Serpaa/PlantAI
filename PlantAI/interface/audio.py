@@ -8,12 +8,8 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
-import logging
+import logging, os, pyaudio, time, wave, warnings
 import numpy as np
-import os
-import pyaudio
-import time
-import wave, warnings
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
