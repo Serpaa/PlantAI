@@ -5,9 +5,7 @@ Author: Tim Grundey
 Created: 10.10.2025
 """
 
-import logging
-import time
-import platform
+import logging, time, platform
 from datetime import datetime
 from core.models import measurement
 from core.predictions import trainModel
