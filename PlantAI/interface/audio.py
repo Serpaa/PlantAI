@@ -163,10 +163,6 @@ def vad():
                     wakewordDetected = False
                     logging.warning(f"Command timeout after {TIMEOUT}s")
 
-    # Close audio stream
-    stream.close()
-    pa.terminate()
-
 def stt(speech: bytes) -> str:
     """
     Speech-to-Text conversion using a temporary wave file.
