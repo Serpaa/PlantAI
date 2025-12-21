@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
@@ -68,10 +69,23 @@ def evaluation(X_test : list, y_test : list):
     logging.info(f"Evaluation - MAE: {mae:.3f}, R²: {r2:.3f}")
 
 def predictTimeUntilDry(curMoisture : float) -> int:
-    """Returns the days:hours it takes until the plant is dry and has to be watered again."""
-    # Create dataframe and make prediction
-    data = pd.DataFrame({'moisture': [curMoisture]})
-    prediction = pipe.predict(data)
+    """
+    Returns the days:hours it takes until the plant is dry and has to be watered again.
+    
+    :param curMoisture: Current measured moisture.
+    :type curMoisture: float
+
+    :return: Days and hours until the plant is dry. Returns none if no prediction could be made.
+    :rtype: int, int
+    """
+    try:
+        # Create dataframe and make prediction
+        data = pd.DataFrame({'moisture': [curMoisture]})
+        prediction = pipe.predict(data)
+    except NotFittedError as ex:
+        # Return none if Pipeline hasn't been fitted yet
+        logging.error(f"Prediction failed: {ex}")
+        return None
 
     # Convert minutes to days and hours
     time = timedelta(minutes=prediction[0])
