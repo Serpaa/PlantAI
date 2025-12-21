@@ -1,0 +1,252 @@
+"""
+Description:
+    Audio control using Silero Models:
+        - Voice activity detection (VAD)
+        - Speech-to-Text (STT) conversion
+        - Text-to-Speech (TTS) conversion
+Author: Tim Grundey
+Created: 26.11.2025
+"""
+
+import logging, os, pyaudio, time, wave, warnings
+import numpy as np
+from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
+from silero import silero_stt, silero_tts
+from silero_vad import load_silero_vad, get_speech_timestamps
+from interface.assistant import respond
+from system.streams import importConfigFromYAML
+
+# Configuration
+stream = importConfigFromYAML()
+config = stream["interface"]
+
+# Constants
+WAKEWORD = ("bella", "ella", "bell")
+SAMPLE_RATE = config["vad"]["sampleRate"]
+CHUNK = config["vad"]["chunk"]
+PAUSE = config["vad"]["speechPause"]
+TIMEOUT = config["vad"]["wakewordTimeout"]
+DEVICE_TTS = config["tts"]["device"]
+DEVICE_STT = config["stt"]["device"]
+
+# Load Silero models
+# Voice activity detection
+print("Loading Silero VAD...", end="\r")
+model = load_silero_vad()
+
+# Save current directory
+# Move to resources for saving Silero config
+cwd = os.getcwd()
+os.chdir("PlantAI/resources")
+
+# Speech-to-Text
+print("Loading Silero STT...", end="\r")
+model_stt, decoder, utils = silero_stt(
+    language='en'
+)
+
+# Text-to-Speech
+print("Loading Silero TTS...", end="\r")
+model_tts, example_text = silero_tts(
+    language='en',
+    speaker='v3_en',
+)
+print("Finished loading Silero models!")
+
+# Return to previous directory
+os.chdir(cwd)
+
+# Get STT utils
+(read_batch, split_into_batches, read_audio, prepare_model_input) = utils
+
+# Set device (GPU or CPU)
+model_tts.to(DEVICE_TTS)
+model_stt.to(DEVICE_STT)
+
+def vad():
+    """
+    Records audio and checks for voice activity.
+    """
+    speechDetected = False; lastSpeech = 0
+    wakewordDetected = False; lastWakeword = 0
+    listSpeech = []
+
+    # Custom function used as ALSA error handler
+    # this prevents ALSA from flooding the terminal with stderr warnings on every boot
+    def py_error_handler(filename, line, function, err, fmt):
+        pass
+    
+    # Convert function from Python to C
+    ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+    c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+
+    # Load library and set error handler
+    asound = cdll.LoadLibrary('libasound.so')
+    asound.snd_lib_error_set_handler(c_error_handler)
+
+    # Init PyAudio and open audio stream
+    pa = pyaudio.PyAudio()
+    stream = pa.open(
+        format=pyaudio.paInt16,
+        channels=1,
+        rate=SAMPLE_RATE,
+        input=True,
+        output=True,
+        frames_per_buffer=CHUNK)
+    
+    while True:
+        # Seperate audio into chunks
+        audioChunk = stream.read(num_frames=SAMPLE_RATE, exception_on_overflow=False)
+
+        # Convert raw audio chunk into float [-1..1]
+        data = np.frombuffer(audioChunk, np.int16).astype(np.float32) / 32768.0
+
+        # Check audio for voice and return timestamps
+        speech = get_speech_timestamps(
+            data,
+            model,
+            sampling_rate=SAMPLE_RATE,
+            return_seconds=False)
+
+        # Voice has been detected
+        if len(speech) > 0:
+            # Combine all chunks as list
+            listSpeech.append(audioChunk)
+
+            # Log result and play audio
+            if (not speechDetected):
+                logging.info(f"Voice detected! Start recording ...")
+
+            # Record time when speech was detected
+            speechDetected = True
+            lastSpeech = time.time()
+        else:
+            # Record current time
+            now = time.time()
+
+            # Detect when speech has ended
+            # by comparing current time and last time speech was detected
+            if speechDetected:
+                if (now - lastSpeech) > PAUSE:
+                    speechDetected = False
+
+                    # Turn speech list into string
+                    separator = b''
+                    combinedSpeech = separator.join(listSpeech)
+                    listSpeech.clear()
+
+                    # Hand over raw speech to STT
+                    convertedSpeech = stt(combinedSpeech)
+
+                    # Choose if speech is wakeword or command
+                    if wakewordDetected:
+                        wakewordDetected = False
+                        logging.info(f"Command recorded: {convertedSpeech}")
+
+                        # Respond to command
+                        respond(convertedSpeech)
+                    else:
+                        logging.info(f"Wakeword recorded: {convertedSpeech}")
+
+                        # Detect wakeword
+                        if any(word in convertedSpeech for word in WAKEWORD):
+                            # Record time when wakeword was detected
+                            wakewordDetected = True
+                            lastWakeword = time.time()
+
+                            # Play activation sound
+                            play('PlantAI/resources/sound/activate.wav')
+                            logging.info(f"Wakeword detected! Waiting for command ...")
+            elif wakewordDetected:
+                # Reset wakeword after timeout
+                if (now - lastWakeword) > TIMEOUT:
+                    wakewordDetected = False
+                    logging.warning(f"Command timeout after {TIMEOUT}s")
+
+def stt(speech: bytes) -> str:
+    """
+    Speech-to-Text conversion using a temporary wave file.
+    
+    :param speech: Raw speech to be converted.
+    :type speech: bytes
+
+    :return: Converted text.
+    :rtype: string
+    """
+
+    # Save temporary wave file
+    path = "PlantAI/resources/sound/tempSTT.wav"
+    with wave.open(path, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)  # 16-bit
+        wf.setframerate(SAMPLE_RATE)
+        wf.writeframes(speech)
+
+    # Ignore warning about torchaudio.load() changing implementation to TorchCodec with v2.9
+    # we're using torchaudio v2.8 anyways since TorchCodec doesn't work on ARM64
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        # Read temporary wave file
+        audio_tensor = read_audio(path)
+
+    # Convert tensor to text
+    input_data = prepare_model_input([audio_tensor], device=DEVICE_STT)
+    output = model_stt(input_data)
+    text = decoder(output[0])
+
+    # Remove temporary file
+    if os.path.exists(path):
+        os.remove(path)
+
+    return text.strip()
+
+def tts(text: str):
+    """
+    Text-to-Speech conversion using a temporary wave file.
+    
+    :param text: Text to be converted.
+    :type text: str
+    """
+    # Save temporary wave file
+    path = "PlantAI/resources/sound/tempTTS.wav"
+    model_tts.save_wav(
+        text=text,
+        speaker='en_0',
+        sample_rate=24000,
+        audio_path=path
+    )
+
+    # Play audio
+    play(path)
+
+    # Remove temporary file
+    if os.path.exists(path):
+        os.remove(path)
+
+def play(path: str):
+    """
+    Plays the wave file located at the selected path.
+    
+    :param path: Path to the wave file.
+    :type path: str
+    """
+    with wave.open(path, 'rb') as wf:
+        # Init PyAudio and open audio stream
+        pa = pyaudio.PyAudio()
+        stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
+                        channels=wf.getnchannels(),
+                        rate=wf.getframerate(),
+                        output=True)
+
+        # Play samples from the wave file
+        while len(data := wf.readframes(CHUNK)):
+            stream.write(data)
+
+        # Short delay to prevent pop sound
+        time.sleep(0.5)
+
+        # Close audio stream
+        stream.stop_stream()
+        stream.close()
+        pa.terminate()

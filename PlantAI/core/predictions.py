@@ -5,56 +5,111 @@ Author: Tim Grundey
 Created: 31.10.2025
 """
 
+import logging
 import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
-from core.models import measurement
+from database.adapter import DBAdapterMeasurement
 
-def hoursUntilDry(allMeasurements: list[measurement]) -> int:
-    """Returns a date when the plant has to be watered again based on predictions."""
-    # Fill lists with data
+# Prepare pipeline
+pipe = Pipeline([
+    ('model', RandomForestRegressor())
+])
+
+def trainModel(dbAdapter : DBAdapterMeasurement):
+    # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []
-    for measurement in allMeasurements:
-        listMinUntilDry.append(measurement.minUntilDry)
-        listMoisture.append(measurement.moisture)
+    allMeasurements = dbAdapter.getList(1, -1, "archived")
 
-    # Create dictionary from lists
-    data = {
-        'minUntilDry': listMinUntilDry,
-        'moisture': listMoisture
-    }
+    # Skip training if no archived measurements are returned
+    if len(allMeasurements) > 0:
+        for measurement in allMeasurements:
+            listMinUntilDry.append(measurement.minUntilDry)
+            listMoisture.append(measurement.moisture)
 
-    # Convert List into DataFrame and prepare features
-    df = pd.DataFrame(data)
-    X = df[['moisture']]
-    y = df['minUntilDry']
+        # Create dictionary from lists
+        data = {
+            'minUntilDry': listMinUntilDry,
+            'moisture': listMoisture
+        }
 
-    # Split training and test data (80/20)
-    # random_state makes sure the data is always mixed the same way (only for testing)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=42)
+        # Convert List into DataFrame and prepare features
+        df = pd.DataFrame(data)
+        X = df[['moisture']]
+        y = df['minUntilDry']
 
-    # Create pipeline with random forest model
-    pipe = Pipeline([
-        ('model', RandomForestRegressor())
-    ])
+        # Save DataFrame as png
+        # plot(df)
 
-    # Train model with data
-    pipe.fit(X_train, y_train)
+        # Split training and test data (80/20)
+        # random_state makes sure the data is always mixed the same way (only for testing)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=42)
+
+        # Train model with data
+        pipe.fit(X_train, y_train)
+        logging.info(f"Random Forest Model trained with {len(allMeasurements)} measurements.")
+
+        # Create evaluation
+        evaluation(X_test, y_test)
+    else:
+        logging.warning(f"Random Forest Model training skipped, no archived measurements found.")
+
+def evaluation(X_test : list, y_test : list):
+    # Make predictions for testing split
     y_pred = pipe.predict(X_test)
 
-    # Evaluation
+    # Evaluate and log results
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    print(f"Prediction: {y_pred}")
-    print(f"MAE: {mae:.3f}, R²: {r2:.3f}")
+    logging.info(f"Evaluation - MAE: {mae:.3f}, R²: {r2:.3f}")
 
-    # Visualisation
-    plt.title("Predictions (using X test values)")
-    plt.scatter(X_train, y_train)
-    plt.scatter(X_test, y_pred, c='m')
-    plt.ylabel("Minutes until dry")
-    plt.xlabel("Moisture")
-    plt.show()
+def predictTimeUntilDry(curMoisture : float) -> int:
+    """
+    Returns the days:hours it takes until the plant is dry and has to be watered again.
+    
+    :param curMoisture: Current measured moisture.
+    :type curMoisture: float
+
+    :return: Days and hours until the plant is dry. Returns none if no prediction could be made.
+    :rtype: int, int
+    """
+    try:
+        # Create dataframe and make prediction
+        data = pd.DataFrame({'moisture': [curMoisture]})
+        prediction = pipe.predict(data)
+    except NotFittedError as ex:
+        # Return none if Pipeline hasn't been fitted yet
+        logging.error(f"Prediction failed: {ex}")
+        return None
+
+    # Convert minutes to days and hours
+    time = timedelta(minutes=prediction[0])
+    days = time.days
+    hours = round(time.seconds / 3600)
+
+    # Log and return result
+    logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
+    return days, hours
+
+def plot(df : pd.DataFrame):
+    """Saves the DataFrame as a PNG."""
+    # Create plot from DataFrame
+    plt.figure(figsize=(12, 5), dpi=250)
+    plt.plot(df["minUntilDry"], df["moisture"])
+    plt.xlabel("Minutes until Dry")
+    plt.ylabel("Moisture")
+    plt.title("Measurements")
+    plt.tight_layout()
+
+    # Format and create timestamp
+    format = "%Y%m%d_%H%M%S"
+    now = datetime.now()
+    timestamp = now.strftime(format)
+
+    # Save plot as PNG
+    plt.savefig(f"PlantAI/system/moisture_{timestamp}.png")

@@ -5,13 +5,11 @@ Author: Tim Grundey
 Created: 25.09.2025
 """
 
-import logging
-import sqlite3
-from system.loader import getConfig
+import logging, sqlite3
 
 def connect():
     """Connect to the SQLite Database."""
-    path = getConfig("database","path")
+    path = "PlantAI/database/PlantAI.db"
     con = sqlite3.connect(path)
     return con, con.cursor()
 

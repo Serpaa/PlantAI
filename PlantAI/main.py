@@ -5,23 +5,26 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
-import logging
-import os
-import threading
-from core.measurements import saveMeasurement
-from database.connector import createDB
-from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
-from interface.console import mainMenu
-from system.loader import getConfig
+import os, logging, threading
+
+# Create archive folder for logs
+archivePath = "PlantAI/resources/archive"
+if not os.path.exists(archivePath):
+    os.mkdir(archivePath)
 
 # Create log file
-logging.basicConfig(
-    filename='PlantAI/system/plantai.log', filemode='a', level=logging.INFO,
-    format='%(asctime)s: %(levelname)s - %(message)s'
-)
+from system.streams import initLog
+initLog("PlantAI/resources", "plantai.log")
+
+# Import all other files
+from core.measurements import saveMeasurement, trainModel
+from database.connector import createDB
+from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from interface.audio import vad
+from interface.console import mainMenu
 
 # Create database if it doesn't exist
-dbPath = getConfig("database","path")
+dbPath = "PlantAI/database/PlantAI.db"
 if not os.path.exists(dbPath):
     createDB("PlantAI/database/PlantAI.sql")
 
@@ -32,8 +35,15 @@ dbAdapterSensor = DBAdapterSensor()
 dbAdapterMeasurement = DBAdapterMeasurement()
 
 # Start new thread for reading sensor data
-thread = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)
-thread.start()
+threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)
+threadSensor.start()
+
+# Start new thread for voice detection
+threadVAD = threading.Thread(target=vad, daemon=True)
+threadVAD.start()
+
+# Train model
+trainModel(dbAdapterMeasurement)
 
 # Logs
 logging.info("System booted.")

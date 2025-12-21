@@ -1,0 +1,16 @@
+core:
+  measurements:
+    readMode: interval
+    readIntervalSensors: 900
+    wateredThreshold: 20
+
+interface:
+  vad:
+    sampleRate: 16000
+    chunk: 1024
+    speechPause: 1
+    wakewordTimeout: 5
+  stt:
+    device: cpu
+  tts:
+    device: cpu

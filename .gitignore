@@ -209,8 +209,12 @@ __marimo__/
 # Database and exports
 *.db
 *.csv
+*.png
 
 # macOS system files
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Silero config
+latest_silero_models.yml

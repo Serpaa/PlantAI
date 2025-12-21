@@ -5,16 +5,22 @@ Author: Tim Grundey
 Created: 10.10.2025
 """
 
-import logging
-import time
-import platform
+import logging, time, platform
 from datetime import datetime
 from core.models import measurement
+from core.predictions import trainModel
 from database.adapter import DBAdapterMeasurement
-from system.loader import getConfig
+from system.streams import importConfigFromYAML
+
+# Configuration
+stream = importConfigFromYAML()
+config = stream["core"]["measurements"]
 
 # Constants
-format = "%Y/%m/%d %H:%M" # Timestamp format
+FORMAT = "%Y/%m/%d %H:%M" # Timestamp format
+THRESHOLD = config["wateredThreshold"]
+MODE = config["readMode"]
+SLEEP = config["readIntervalSensors"]
 
 if "tegra" in platform.release():    
     # Initialize ADS1115 via I2C
@@ -24,7 +30,7 @@ if "tegra" in platform.release():
     # Set the max. Voltage to be measured
     ads.setGain(ads.PGA_4_096V)
 else:
-    print(f"Sensor initialization skipped! (not running on Jetson Nano)")
+    logging.warning("Sensor initialization skipped! (not running on Jetson Nano)")
 
 def readVoltage(channel : int) -> float:
     """Returns the current voltage [V] of channel 0..3."""
@@ -53,8 +59,7 @@ def readTemperature(cycle : int) -> float:
 
 def watered(old : float, new : float) -> bool:
     """Returns true if moisture increased significantly between old and new measurement."""
-    threshold = getConfig("core", "wateredThreshold")
-    if new - old > threshold:
+    if new - old > THRESHOLD:
         return True
     else:
         return False
@@ -65,11 +70,9 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
     if "tegra" in platform.release():
         while True:
             # Check if reading mode is interval or debug
-            mode = getConfig("core", "readMode")
-            if mode == "interval":
+            if MODE == "interval":
                 # Wait until reading
-                sleep = getConfig("core", "readIntervalSensors")
-                time.sleep(sleep)
+                time.sleep(SLEEP)
 
                 # Check if recent measurement exists
                 skipInsert = False
@@ -81,17 +84,20 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
                     # Set minutes until dry for all previous measurements
                     logging.info("Watering detected.")
                     setMinutesUntilDry(dbAdapter, recentMeasurement)
+
+                    # Train model using the now archived measurements
+                    trainModel(dbAdapter)
                     skipInsert = True
 
                 # Skip insert after minutes until dry were set
                 if not skipInsert:
                     # Format timestamp
                     now = datetime.now()
-                    timestamp = now.strftime(format)
+                    timestamp = now.strftime(FORMAT)
 
                     # Read moisture and temperature from SMT50 (-1 = non-archived entry)
                     dbAdapter.insert(measurement(1, readMoisture(5), readTemperature(5), -1, timestamp))
-            elif mode == "debug":
+            elif MODE == "debug":
                 # Print data directly
                 print(f"Sensor - Moisture: {readVoltage(0):.2f}V = {readMoisture(1)}%, Temperature: {readVoltage(1):.2f}V = {readTemperature(1)}°C")
                 
@@ -101,11 +107,11 @@ def saveMeasurement(dbAdapter: DBAdapterMeasurement):
 def setMinutesUntilDry(dbAdapter: DBAdapterMeasurement, recentMeasurement : measurement):
     """Set Minutes until Dry for all non-archived measurements."""
     # Format recent timestamp
-    recentTime = datetime.strptime(recentMeasurement.timestamp, format)
+    recentTime = datetime.strptime(recentMeasurement.timestamp, FORMAT)
 
     for entry in dbAdapter.getList(sensor=1, limit=-1, mode="current"):
         # Format current timestamp
-        actTime = datetime.strptime(entry.timestamp, format)
+        actTime = datetime.strptime(entry.timestamp, FORMAT)
 
         # Calculate minutes until dry
         sekUntilDry = recentTime - actTime
