@@ -13,7 +13,7 @@ import numpy as np
 import os
 import pyaudio
 import time
-import wave
+import wave, warnings
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from silero import silero_stt, silero_tts
 from silero_vad import load_silero_vad, get_speech_timestamps
@@ -186,8 +186,15 @@ def stt(speech: bytes) -> str:
         wf.setframerate(SAMPLE_RATE)
         wf.writeframes(speech)
 
-    # Read temporary wave file and convert to text
-    audio_tensor = read_audio(path)
+    # Ignore warning about torchaudio.load() changing implementation to TorchCodec with v2.9
+    # we're using torchaudio v2.8 anyways since TorchCodec doesn't work on ARM64
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        # Read temporary wave file
+        audio_tensor = read_audio(path)
+
+    # Convert tensor to text
     input_data = prepare_model_input([audio_tensor], device=DEVICE_STT)
     output = model_stt(input_data)
     text = decoder(output[0])
