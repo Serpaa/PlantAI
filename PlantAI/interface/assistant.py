@@ -20,7 +20,7 @@ def respond(speech: str):
     """
     if "time" in speech:
         # Get current time
-        data = f"Current time: {datetime.hour} o'clock and {datetime.minute} minutes."
+        data = f"Current time: {datetime.hour()} o'clock and {datetime.minute()} minutes."
         prompt = speech
     elif "water" in speech:
         # Get time until dry
