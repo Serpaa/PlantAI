@@ -34,7 +34,7 @@ def question(prompt: str, data) -> str:
         userContent = f"'{prompt}' using additional information: '{data}'"
 
     # Send message to model
-    response: ChatResponse = chat(model='llama3.2:1b', messages=[
+    response: ChatResponse = chat(model='llama3.2:3b', messages=[
         {'role': 'system', 'content': sysContent},
         {'role': 'user', 'content': userContent}
     ])
