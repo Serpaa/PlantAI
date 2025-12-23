@@ -22,6 +22,14 @@ pipe = Pipeline([
 ])
 
 def trainModel(dbAdapter : DBAdapterMeasurement, mode : str = None):
+    """
+    Trains the Random Forest Model using the archived measurements, skips if no archived measurements are found.
+    
+    :param dbAdapter: Database adapter to access the measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param mode: "BOOT" = Print additional information.
+    :type mode: str
+    """
     # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []
     allMeasurements = dbAdapter.getList(1, -1, "archived")
