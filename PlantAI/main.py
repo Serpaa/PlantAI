@@ -43,7 +43,7 @@ threadVAD = threading.Thread(target=vad, daemon=True)
 threadVAD.start()
 
 # Train model
-trainModel(dbAdapterMeasurement)
+trainModel(dbAdapterMeasurement, "BOOT")
 
 # Logs
 logging.info("System booted.")

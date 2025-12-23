@@ -21,10 +21,14 @@ pipe = Pipeline([
     ('model', RandomForestRegressor())
 ])
 
-def trainModel(dbAdapter : DBAdapterMeasurement):
+def trainModel(dbAdapter : DBAdapterMeasurement, mode : str = None):
     # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []
     allMeasurements = dbAdapter.getList(1, -1, "archived")
+
+    # Print feedback during boot
+    if mode == "BOOT":
+        print("Training Random Forest Model...", end="\r")
 
     # Skip training if no archived measurements are returned
     if len(allMeasurements) > 0:
@@ -54,10 +58,18 @@ def trainModel(dbAdapter : DBAdapterMeasurement):
         pipe.fit(X_train, y_train)
         logging.info(f"Random Forest Model trained with {len(allMeasurements)} measurements.")
 
+        # Print feedback during boot
+        if mode == "BOOT":
+            print(f"Finished training Random Forest Model with {len(allMeasurements)} measurements!")
+
         # Create evaluation
         evaluation(X_test, y_test)
     else:
         logging.warning(f"Random Forest Model training skipped, no archived measurements found.")
+
+        # Print feedback during boot
+        if mode == "BOOT":
+            print(f"Random Forest Model training skipped, no archived measurements found.")
 
 def evaluation(X_test : list, y_test : list):
     # Make predictions for testing split
