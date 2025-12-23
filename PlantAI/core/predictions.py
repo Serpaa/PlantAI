@@ -85,7 +85,7 @@ def predictTimeUntilDry(curMoisture : float) -> int:
     except NotFittedError as ex:
         # Return none if Pipeline hasn't been fitted yet
         logging.error(f"Prediction failed: {ex}")
-        return None
+        return None, None
 
     # Convert minutes to days and hours
     time = timedelta(minutes=prediction[0])

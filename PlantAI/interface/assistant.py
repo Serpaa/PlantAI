@@ -24,12 +24,14 @@ def respond(speech: str):
         data = f"Current time: {time}"
         prompt = speech
     elif "water" in speech:
-        # Get days until watered
-        if predictTimeUntilDry(readMoisture(1)) == None:
+        # Get time until dry
+        days, hours = predictTimeUntilDry(readMoisture(1))
+
+        # Only create answer if prediction was made
+        if days == None and hours == None:
             data = None
             prompt = "Tell the user not enough data has been collected to predict the moisture."
         else:
-            days, hours = predictTimeUntilDry(readMoisture(1))
             data = f"Time until plant has to be watered again: {days} days and {hours} hours."
             prompt = speech
     else:

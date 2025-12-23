@@ -209,11 +209,14 @@ def train(dbAdapter : DBAdapterMeasurement):
 # Predictions
 def predict():
     """Predicts in how many minutes the plant has to be watered again."""
+    # Get moisture and time until dry
     curMoisture = readMoisture(1)
-    if predictTimeUntilDry(curMoisture) == None:
+    days, hours = predictTimeUntilDry(curMoisture)
+
+    # Only print answer if prediction was made
+    if days == None and hours == None:
         print("Not enough data collected to predict the moisture.")
     else:
-        days, hours = predictTimeUntilDry(curMoisture)
         print(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
 
 # Show weather
