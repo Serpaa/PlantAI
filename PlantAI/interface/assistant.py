@@ -40,7 +40,7 @@ def respond(speech: str):
             prompt = speech
     elif "weather" in speech:
         # Get weather forecast
-        data = getForecast
+        data = getForecast()
         prompt = speech
     else:
         # Unknown command

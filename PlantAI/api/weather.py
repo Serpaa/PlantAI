@@ -31,33 +31,42 @@ def getForecast(location: str = None) -> str:
     # Create URL and send API request
     url = (
         f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}"
-        f"&hourly=temperature_2m,precipitation"
         f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
-        f"&timezone=Europe%2FBerlin")
+        f"&forecast_days=2"
+        f"&timezone=Europe%2FBerlin"
+    )
     response = requests.get(url)
 
     # Parse data if request was successful
-    forecast = ""
     if response.status_code == 200:
         data = response.json()
-        forecast += f"Current forecast for {city}:\n"
-        forecast += f"--------------------\n"
-        forecast += f"> Hourly temperatures (in °C):\n"
-        forecast += f"  {data['hourly']['temperature_2m'][:6]}\n\n"
-        forecast += f"> Rainfall (in mm):\n"
-        forecast += f"  {data['hourly']['precipitation'][:6]}\n\n"
-        forecast += f"Daily forecast:\n"
-        forecast += f"----------------\n"
-        for date, tmax, tmin, rain in zip(
-            data["daily"]["time"],
-            data["daily"]["temperature_2m_max"],
-            data["daily"]["temperature_2m_min"],
-            data["daily"]["precipitation_sum"],
-        ):
-            forecast += f"{date}: {tmin}°C – {tmax}°C, Rain: {rain} mm\n"
+
+        # Dictionary of todays forecast
+        today = {
+            "date": data["daily"]["time"][0],
+            "tmax": data["daily"]["temperature_2m_max"][0],
+            "tmin": data["daily"]["temperature_2m_min"][0],
+            "rain": data["daily"]["precipitation_sum"][0]
+        }
+
+        # Dictionary of tomorrows forecast
+        tomorrow = {
+            "date": data["daily"]["time"][1],
+            "tmax": data["daily"]["temperature_2m_max"][1],
+            "tmin": data["daily"]["temperature_2m_min"][1],
+            "rain": data["daily"]["precipitation_sum"][1]
+        }
+
+        # Build and return forecast
+        forecast = ""
+        forecast += f"Weather forecast for {city}:\n"
+        forecast += f"Today the {today['date']}:\n"
+        forecast += f"Temperature range: {today['tmin']}°C – {today['tmax']}°C, Rain: {today['rain']} mm\n"
+        forecast += f"Tomorrow the {tomorrow['date']}:\n"
+        forecast += f"Temperature range: {tomorrow['tmin']}°C – {tomorrow['tmax']}°C, Rain: {tomorrow['rain']} mm"
+        return forecast
     else:
         raise ConnectionError(f"Forecast - Error retrieving weather data: {response.status_code}")
-    return forecast
 
 # Open-Meteo Geocoding API
 def geocode(location: str) -> tuple[float, float]:
