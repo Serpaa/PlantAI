@@ -8,6 +8,7 @@ Created: 05.12.2025
 import interface.audio as audio
 import interface.llm as llm
 from datetime import datetime
+from api.weather import getForecast
 from core.measurements import readMoisture
 from core.predictions import predictTimeUntilDry
 
@@ -37,6 +38,10 @@ def respond(speech: str):
         else:
             data = f"Time until plant has to be watered again: {days} days and {hours} hours."
             prompt = speech
+    elif "weather" in speech:
+        # Get weather forecast
+        data = getForecast
+        prompt = speech
     else:
         # Unknown command
         data = None
