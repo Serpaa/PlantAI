@@ -44,17 +44,17 @@ def getForecast(location: str = None) -> str:
         # Dictionary of todays forecast
         today = {
             "date": data["daily"]["time"][0],
-            "tmax": data["daily"]["temperature_2m_max"][0],
-            "tmin": data["daily"]["temperature_2m_min"][0],
-            "rain": data["daily"]["precipitation_sum"][0]
+            "tmax": round(data["daily"]["temperature_2m_max"][0]),
+            "tmin": round(data["daily"]["temperature_2m_min"][0]),
+            "rain": round(data["daily"]["precipitation_sum"][0])
         }
 
         # Dictionary of tomorrows forecast
         tomorrow = {
             "date": data["daily"]["time"][1],
-            "tmax": data["daily"]["temperature_2m_max"][1],
-            "tmin": data["daily"]["temperature_2m_min"][1],
-            "rain": data["daily"]["precipitation_sum"][1]
+            "tmax": round(data["daily"]["temperature_2m_max"][1]),
+            "tmin": round(data["daily"]["temperature_2m_min"][1]),
+            "rain": round(data["daily"]["precipitation_sum"][1])
         }
 
         # Build and return forecast
