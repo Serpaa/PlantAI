@@ -8,7 +8,7 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
-import logging, os, pyaudio, time, wave, warnings
+import logging, os, platform, pyaudio, time, wave, warnings
 import numpy as np
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from silero import silero_stt, silero_tts
@@ -73,16 +73,17 @@ def vad():
 
     # Custom function used as ALSA error handler
     # this prevents ALSA from flooding the terminal with stderr warnings on every boot
-    def py_error_handler(filename, line, function, err, fmt):
-        pass
-    
-    # Convert function from Python to C
-    ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-    c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+    if "tegra" in platform.release():
+        def py_error_handler(filename, line, function, err, fmt):
+            pass
+        
+        # Convert function from Python to C
+        ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+        c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
 
-    # Load library and set error handler
-    asound = cdll.LoadLibrary('libasound.so')
-    asound.snd_lib_error_set_handler(c_error_handler)
+        # Load library and set error handler
+        asound = cdll.LoadLibrary('libasound.so')
+        asound.snd_lib_error_set_handler(c_error_handler)
 
     # Init PyAudio and open audio stream
     pa = pyaudio.PyAudio()
