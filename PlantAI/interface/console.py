@@ -6,7 +6,7 @@ Created: 30.09.2025
 """
 
 import logging, sys
-from api.OpenMeteo import getWeather
+from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
 from core.measurements import readMoisture
 from core.models import plant, species, sensor
@@ -221,14 +221,12 @@ def predict():
 
 # Show weather
 def weather():
-    """Prints a weather forecast of the selected location."""
-    print("Choose a location:")
-    userInput = input(">>> ")
-
+    """Prints a weather forecast of the current location."""
     try:
-        # Get weather for location
-        print(getWeather(userInput))
-    except Exception as ex:
+        # Get forecast of current location
+        print(getForecast())
+    except (ValueError, ConnectionError) as ex:
+        logging.error(ex)
         print(ex)
 
 # Show help
