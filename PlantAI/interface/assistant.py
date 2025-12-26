@@ -39,8 +39,12 @@ def respond(speech: str):
             data = f"Time until plant has to be watered again: {days} days and {hours} hours."
             prompt = speech
     elif "weather" in speech:
-        # Get weather forecast
-        data = getForecast()
+        try:
+            # Get weather forecast
+            data = getForecast()
+        except (ValueError, ConnectionError) as ex:
+            # Get error description
+            data = ex
         prompt = speech
     else:
         # Unknown command

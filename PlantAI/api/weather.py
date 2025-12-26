@@ -5,7 +5,7 @@ Author: Tim Grundey
 Created: 03.10.2025
 """
 
-import requests
+import logging,requests
 
 # Open-Meteo Weather API
 def getForecast(location: str = None) -> str:
@@ -21,21 +21,30 @@ def getForecast(location: str = None) -> str:
     # Get coordinates for location
     latitude : float; longitude : float; city : str
     if location == None:
-        # Get current location using IPinfo
-        latitude, longitude, city = getLocation()
+        try:
+            # Get current location using IPinfo
+            latitude, longitude, city = getLocation()
+        except ConnectionError:
+            raise
     else:
-        # Get provided location using geocoding
-        latitude, longitude = geocode(location)
-        city = location
+        try:
+            # Get provided location using geocoding
+            latitude, longitude = geocode(location)
+            city = location
+        except (ConnectionError, ValueError):
+            raise
 
-    # Create URL and send API request
-    url = (
-        f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}"
-        f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
-        f"&forecast_days=2"
-        f"&timezone=Europe%2FBerlin"
-    )
-    response = requests.get(url)
+    try:
+        # Create URL and send API request
+        url = (
+            f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}"
+            f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
+            f"&forecast_days=2"
+            f"&timezone=Europe%2FBerlin")
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError as ex:
+        logging.error(ex)
+        raise ConnectionError("Error retrieving weather forecast, connection failed.")
 
     # Parse data if request was successful
     if response.status_code == 200:
@@ -65,8 +74,6 @@ def getForecast(location: str = None) -> str:
         forecast += f"Tomorrow the {tomorrow['date']}:\n"
         forecast += f"Temperature range: {tomorrow['tmin']}°C – {tomorrow['tmax']}°C, Rain: {tomorrow['rain']} mm"
         return forecast
-    else:
-        raise ConnectionError(f"Forecast - Error retrieving weather data: {response.status_code}")
 
 # Open-Meteo Geocoding API
 def geocode(location: str) -> tuple[float, float]:
@@ -79,9 +86,13 @@ def geocode(location: str) -> tuple[float, float]:
     :return: Latitude and longitude of the location.
     :rtype: tuple[float, float]
     """
-    # Create URL and send API request
-    url = f"https://geocoding-api.open-meteo.com/v1/search?name={location}&count=1&language=de"
-    response = requests.get(url)
+    try:
+        # Create URL and send API request
+        url = f"https://geocoding-api.open-meteo.com/v1/search?name={location}&count=1&language=de"
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError as ex:
+        logging.error(ex)
+        raise ConnectionError("Error retrieving geodata, connection failed.")
 
     # Parse data if request was successful
     if response.status_code == 200:
@@ -92,9 +103,8 @@ def geocode(location: str) -> tuple[float, float]:
             longitude = data["results"][0]["longitude"]
             return latitude, longitude
         else:
-            raise ValueError("Geocoding - Location not found")
-    else:
-        raise ConnectionError(f"Geocoding - Error retrieving geodata: {response.status_code}")
+            logging.error("Error retrieving geodata, location not found.")
+            raise ValueError("Error retrieving geodata, location not found.")
 
 # IPinfo location API
 def getLocation() -> tuple[float, float, str]:
@@ -104,9 +114,13 @@ def getLocation() -> tuple[float, float, str]:
     :return: Latitude, longitude and name of the city.
     :rtype: tuple[float, float, str]
     """
-    # Create URL and send API request
-    url = "https://ipinfo.io/json"
-    response = requests.get(url)
+    try:
+        # Create URL and send API request
+        url = "https://ipinfo.io/json"
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError as ex:
+        logging.error(ex)
+        raise ConnectionError("Error retrieving location data, connection failed.")
 
     # Parse data if request was successful
     if response.status_code == 200:
@@ -116,6 +130,4 @@ def getLocation() -> tuple[float, float, str]:
         city = data["city"]
 
         return latitude, longitude, city
-    else:
-        raise ConnectionError(f"IPinfo - Error retrieving location: {response.status_code}")
     

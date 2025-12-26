@@ -226,7 +226,6 @@ def weather():
         # Get forecast of current location
         print(getForecast())
     except (ValueError, ConnectionError) as ex:
-        logging.error(ex)
         print(ex)
 
 # Show help
