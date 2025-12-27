@@ -7,13 +7,13 @@ Created: 30.09.2025
 
 import logging, sys
 from api.weather import getForecast
-from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterSensor, DBAdapterMeasurement
+from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from core.measurements import readMoisture
-from core.models import plant, species, sensor
+from core.models import plant, species
 from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
 
-def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterSensor: DBAdapterSensor, dbAdapterMeasurement: DBAdapterMeasurement):
+def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterMeasurement: DBAdapterMeasurement):
     """Main Menu of the console interface."""
     print("Welcome to PlantAI!")
     while True:
@@ -23,11 +23,9 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
         # Choose action based on input
         if "add" in userInput:
             if "plant" in userInput:
-                addEntry(dbAdapterPlant)
+                addEntry(dbAdapterPlant, dbAdapterSpecies)
             elif "species" in userInput:
                 addEntry(dbAdapterSpecies)
-            elif "sensor" in userInput:
-                addEntry(dbAdapterSensor)
             else:
                 unknown()
         elif "delete" in userInput:
@@ -35,10 +33,8 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 deleteEntry(dbAdapterPlant)
             elif "species" in userInput:
                 deleteEntry(dbAdapterSpecies)
-            elif "sensor" in userInput:
-                deleteEntry(dbAdapterSensor)
             elif "measure" in userInput:
-                deleteEntry(dbAdapterMeasurement)
+                deleteEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
         elif "show" in userInput:
@@ -46,17 +42,17 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 showEntry(dbAdapterPlant)
             elif "species" in userInput:
                 showEntry(dbAdapterSpecies)
-            elif "sensor" in userInput:
-                showEntry(dbAdapterSensor)
             elif "measure" in userInput:
-                showEntry(dbAdapterMeasurement)
+                showEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
+        elif "assign" in userInput:
+            assignPlant(dbAdapterPlant)
         elif "csv" in userInput:
             if "import" in userInput:
-                importEntry(dbAdapterMeasurement)
+                importEntry(dbAdapterMeasurement, dbAdapterPlant)
             elif "export" in userInput:
-                exportEntry(dbAdapterMeasurement)
+                exportEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
         elif "model" in userInput:
@@ -76,19 +72,32 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
             unknown()
 
 # Add new entry
-def addEntry(dbAdapter: DBAdapter):
+def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Add a new entry to the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a name:")
         userInputName = input(">>> ")
+
+        print("Choose a location:")
+        print("[0] inside")
+        print("[1] outside")
+        userInputLocation = input(">>> ")
+
+        # Select location based on input
+        if int(userInputLocation) == 0:
+            inputLocation = "inside"
+        elif int(userInputLocation) == 1:
+            inputLocation = "outside"
+        else:
+            raise ValueError("Location not available.")
+
         print("Choose a species (ID):")
+        showEntryBrief(showAdapter)
         userInputSpecies = input(">>> ")
-        print("Choose a sensor (ID):")
-        userInputSensor = input(">>> ")
-        print("Plant added!")
 
         # Fill data with user input
-        data = plant(name=userInputName, speciesId=userInputSpecies, sensorId=userInputSensor)
+        data = plant(name=userInputName, location=inputLocation, speciesId=userInputSpecies)
+        print("Plant added!")
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
         print("Choose a name:")
@@ -101,61 +110,50 @@ def addEntry(dbAdapter: DBAdapter):
         data = species(name=userInputName, minMoisture=userInputMoisture)
         print("Species added!")
 
-    elif isinstance(dbAdapter, DBAdapterSensor):
-        print("Choose I2C-Address (hex: 0x36):")
-        userInputI2C = input(">>> ")
-
-        # Fill data with user input
-        data = sensor(i2cAddress=int(userInputI2C, 16))
-        print("Sensor added!")
-
     # Add entry to database
     dbAdapter.insert(data)
 
 # Delete entry
-def deleteEntry(dbAdapter: DBAdapter):
+def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Deletes the selected entry from the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a plant to delete (ID):")
+        showEntryBrief(dbAdapter)
         userInput = input(">>> ")
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
         print("Choose a species to delete (ID):")
-        userInput = input(">>> ")
-
-    elif isinstance(dbAdapter, DBAdapterSensor):
-        print("Choose a sensor to delete (ID):")
+        showEntryBrief(dbAdapter)
         userInput = input(">>> ")
     
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        print("Choose a sensor to delete (ID):")
+        print("Choose for which plant (ID) to delete the measurements:")
+        showEntryBrief(showAdapter)
         userInput = input(">>> ")
 
-    # Delete entry from database
     try:
+        # Delete entry from database
         dbAdapter.delete(userInput)
         print(f"Entry {userInput} deleted!")
     except Exception as ex:
         print(ex)
 
 # Show entries
-def showEntry(dbAdapter: DBAdapter):
+def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Prints all entries from a specific table."""
     if isinstance(dbAdapter, DBAdapterPlant):
-        print("[ID | Species (ID) | Sensor (ID) | Name]")
-        print("----------------------------------------")
+        print("[ID | Species (ID) | Name | Location]")
+        print("-------------------------------------")
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
         print("[ID | Name | min. Moisture]")
         print("---------------------------")
 
-    elif isinstance(dbAdapter, DBAdapterSensor):
-        print("[ID | I2C-Address]")
-        print("------------------")
-
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        print("Choose a sensor to show (ID):")
+        print("Choose for which plant (ID) to show the measurements:")
+        showEntryBrief(showAdapter)
         userInputId = input(">>> ")
+
         print("Choose how many entries:")
         userInputEntries = input(">>> ")
 
@@ -163,25 +161,49 @@ def showEntry(dbAdapter: DBAdapter):
         print("---------------------------------------------------------------------------")
 
     # Get all objects from database
-    if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies) or isinstance(dbAdapter, DBAdapterSensor):
+    if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
         result = dbAdapter.getList()
     elif isinstance(dbAdapter, DBAdapterMeasurement):
         result = dbAdapter.getList(sensor=int(userInputId), limit=int(userInputEntries), mode="all")
 
     # Print all objects
     for object in result:
-        print(object.__str__())
+        print(object.strDetail())
+
+# Show entries (brief)
+def showEntryBrief(dbAdapter: DBAdapter):
+    """Prints a brief description from a specific table."""
+    if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
+        result = dbAdapter.getList()
+
+        # Print all objects
+        for object in result:
+            print(object.strBrief())
+
+# Assign plant to input channel
+def assignPlant(dbAdapter: DBAdapterPlant):
+    print("Choose a plant (ID):")
+    showEntryBrief(dbAdapter)
+    userInputPlant = input(">>> ")
+
+    print("Choose a input channel (ID):")
+    userInputChannel = input(">>> ")
+
+    # Update input channel
+    dbAdapter.updateChannel(userInputPlant, userInputChannel)
+    print(f"Plant {userInputPlant} assigned to channel {userInputChannel}!")
 
 # Import entry
-def importEntry(dbAdapter: DBAdapterMeasurement):
-    """Imports measurements of the selected sensor as CSV."""
-    print("Choose a sensor to import (ID):")
+def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
+    """Imports measurements of the selected plant as CSV."""
+    print("Choose a plant (ID) to import the measurements for:")
+    showEntryBrief(showAdapter)
     userInputId = input(">>> ")
 
     # Insert new data into database
     path = "PlantAI/resources/measurements.csv"
     try:
-        for entry in importFromCSV(path=path, sensorId=userInputId):
+        for entry in importFromCSV(path=path, plantId=userInputId):
             dbAdapter.insert(entry)
         print("Import successful!")
     except FileNotFoundError:
@@ -189,13 +211,14 @@ def importEntry(dbAdapter: DBAdapterMeasurement):
         logging.error(f"Import failed! No such file: {path}")
 
 # Export entry
-def exportEntry(dbAdapter: DBAdapterMeasurement):
-    """Exports measurements of the selected sensor as CSV."""
-    print("Choose a sensor to export (ID):")
+def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
+    """Exports measurements of the selected plant as CSV."""
+    print("Choose a plant (ID) to export the measurements for:")
+    showEntryBrief(showAdapter)
     userInputId = input(">>> ")
     
     # Get all objects from database (-1 = unlimited)
-    result = dbAdapter.getList(sensor=int(userInputId), limit=int(-1), mode="all")
+    result = dbAdapter.getList(plant=int(userInputId), limit=int(-1), mode="all")
 
     # Create export
     path = "PlantAI/resources/measurements.csv"
@@ -232,14 +255,15 @@ def weather():
 def help():
     """Prints the help menu."""
     print("Available commands:")
-    print("  add [plant,species,sensor]             Add a new plant, species or sensor")
-    print("  delete [plant,species,sensor,measure]  Delete a plant, species, sensor or measurement")
-    print("  show [plant,species,sensor,measure]    Show all plants, species, sensors or measurements")
-    print("  csv [import,export]                    Imports or exports all measurements using CSV")
-    print("  model [train,predict]                  Manually train the model or predict minUntilDry")
-    print("  weather                                Show weather forecast")
-    print("  help                                   Show this help message")
-    print("  exit,bye                               Exit")
+    print("  add [plant,species]                Add a new plant or species")
+    print("  delete [plant,species,measure]     Delete a plant, species or measurement")
+    print("  show [plant,species,measure]       Show all plants, species or measurements")
+    print("  assign [plant]                     Assign a plant to an input channel")
+    print("  csv [import,export]                Imports or exports all measurements using CSV")
+    print("  model [train,predict]              Manually train the model or predict minUntilDry")
+    print("  weather                            Show weather forecast")
+    print("  help                               Show this help message")
+    print("  exit,bye                           Exit")
 
 # Unknown command
 def unknown():

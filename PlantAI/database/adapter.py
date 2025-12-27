@@ -7,7 +7,7 @@ Created: 25.09.2025
 
 from abc import ABC, abstractmethod
 from database.connector import execute, fetchall, fetchone
-from core.models import plant, species, sensor, measurement
+from core.models import plant, species, measurement
 
 class DBAdapter(ABC):
     @abstractmethod
@@ -33,17 +33,22 @@ class DBAdapterPlant(DBAdapter):
 
         # Create a list of plants
         for entry in fetchall(query):
-            allPlants.append(plant(plantId=entry[0], speciesId=entry[1], sensorId=entry[2], name=entry[3]))
+            allPlants.append(plant(plantId=entry[0], speciesId=entry[1], name=entry[2], location=entry[3]))
         return allPlants
 
     def insert(self, data: plant):
-        query = "INSERT INTO plants (speciesId, sensorId, name) VALUES (?, ?, ?)"
-        values = (data.speciesId, data.sensorId, data.name)
+        query = "INSERT INTO plants (speciesId, name, location) VALUES (?, ?, ?)"
+        values = (data.speciesId, data.name, data.location)
         execute(query, values)
 
     def update(self, data: plant):
-        query = "UPDATE plants SET speciesId = ?, sensorId = ?, name = ? WHERE plantId = ?"
-        values = (data.speciesId, data.sensorId, data.name, data.plantId)
+        query = "UPDATE plants SET speciesId = ?, name = ?, location = ? WHERE plantId = ?"
+        values = (data.speciesId, data.name, data.location, data.plantId)
+        execute(query, values)
+
+    def updateChannel(self, plantId: int, channelId: int):
+        query = "UPDATE channel SET plantId = ? WHERE channelId = ?"
+        values = (plantId, channelId)
         execute(query, values)
 
     def delete(self, data: int):
@@ -76,33 +81,8 @@ class DBAdapterSpecies(DBAdapter):
         values = (data,)
         execute(query, values)
 
-class DBAdapterSensor(DBAdapter):
-    def getList(self) -> list[sensor]:
-        query = "SELECT * FROM sensors"
-        allSensors = []
-
-        # Create a list of sensors
-        for entry in fetchall(query):
-            allSensors.append(sensor(sensorId=entry[0], i2cAddress=entry[1]),)
-        return allSensors
-
-    def insert(self, data: sensor):
-        query = "INSERT INTO sensors (i2cAddress) VALUES (?)"
-        values = (data.i2cAddress,)
-        execute(query, values)
-
-    def update(self, data: sensor):
-        query = "UPDATE sensors SET i2cAddress = ? WHERE sensorId = ?"
-        values = (data.i2cAddress, data.sensorId)
-        execute(query, values)
-
-    def delete(self, data: int):
-        query = "DELETE FROM sensors WHERE sensorId = ?"
-        values = (data,)
-        execute(query, values)
-
 class DBAdapterMeasurement(DBAdapter):
-    def getSingle(self, sensor: int, mode: str = "recent") -> measurement:
+    def getSingle(self, plant: int, mode: str = "recent") -> measurement:
         """
         Returns a single measurement.
 
@@ -119,20 +99,20 @@ class DBAdapterMeasurement(DBAdapter):
 
         # Create query
         query = f"""
-            SELECT * FROM measurements WHERE sensorId = ? AND minUntilDry = '-1'
+            SELECT * FROM measurements WHERE plantId = ? AND minUntilDry = '-1'
             ORDER BY timestamp {direction}
             """
-        values = (sensor,)
+        values = (plant,)
         
         # Convert result to measurement
         result = fetchone(query, values)
         if result is None:
             return None
         else:
-            return measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
+            return measurement(measureId=result[0],plantId=result[1], moisture=result[2], 
                                temperature=result[3], minUntilDry=result[4], timestamp=result[5])
 
-    def getList(self, sensor: int, limit: int, mode: str = "all") -> list[measurement]:
+    def getList(self, plant: int, limit: int, mode: str = "all") -> list[measurement]:
         """
         Returns a list with measurements sorted from old to new.
 
@@ -153,25 +133,25 @@ class DBAdapterMeasurement(DBAdapter):
         # Create query
         query = f"""
             SELECT * FROM (
-                SELECT * FROM measurements WHERE sensorId = ? {whereClause}
+                SELECT * FROM measurements WHERE plantId = ? {whereClause}
                 ORDER BY timestamp DESC 
                 LIMIT ?) 
             ORDER BY timestamp
             """
-        values = (sensor, limit)
+        values = (plant, limit)
         allMeasurements = []
 
         # Create a list of measurements
         for result in fetchall(query, values):
             allMeasurements.append(
-                measurement(measureId=result[0],sensorId=result[1], moisture=result[2], 
+                measurement(measureId=result[0],plantId=result[1], moisture=result[2], 
                             temperature=result[3], minUntilDry=result[4], timestamp=result[5]))
         return allMeasurements
 
     def insert(self, data: measurement):
         """Inserts a new measurement."""
-        query = "INSERT INTO measurements (sensorId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
-        values = (data.sensorId, data.moisture, data.temperature, data.minUntilDry, data.timestamp)
+        query = "INSERT INTO measurements (plantId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
+        values = (data.plantId, data.moisture, data.temperature, data.minUntilDry, data.timestamp)
         execute(query, values)
 
     def update(self, id: int, min: int):
@@ -181,7 +161,7 @@ class DBAdapterMeasurement(DBAdapter):
         execute(query, values)
 
     def delete(self, data: int):
-        """Deletes all measurements for the chosen sensorId."""
-        query = "DELETE FROM measurements WHERE sensorId = ?"
+        """Deletes all measurements for the chosen plantId."""
+        query = "DELETE FROM measurements WHERE plantId = ?"
         values = (data,)
         execute(query, values)

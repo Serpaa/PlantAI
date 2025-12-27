@@ -28,6 +28,7 @@ def createDB(path: str):
     for command in sqlCommands:
         try:
             cur.execute(command)
+            con.commit()
         except sqlite3.OperationalError as msg:
             print("Command skipped: ", msg)
     cur.close()

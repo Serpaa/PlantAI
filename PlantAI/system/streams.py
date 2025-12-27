@@ -28,7 +28,7 @@ def exportAsCSV(path: str, allMeasurements: list[measurement]):
     # Logs
     logging.info("CSV export created.")
 
-def importFromCSV(path: str, sensorId: int) -> list[measurement]:
+def importFromCSV(path: str, plantId: int) -> list[measurement]:
     """
     Returns a list of measurements from CSV.
     
@@ -48,7 +48,7 @@ def importFromCSV(path: str, sensorId: int) -> list[measurement]:
         allMeasurements = []
         for row in reader:
             allMeasurements.append(
-                measurement(sensorId = sensorId, minUntilDry = row[0], moisture = row[1], temperature = row[2], timestamp = row[3]))
+                measurement(plantId = plantId, minUntilDry = row[0], moisture = row[1], temperature = row[2], timestamp = row[3]))
         return allMeasurements
     # Logs
     logging.info("Imported measurements from CSV.")
