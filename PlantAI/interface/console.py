@@ -81,15 +81,27 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         print("Choose a location:")
         print("[0] inside")
         print("[1] outside")
-        userInputLocation = input(">>> ")
 
-        # Select location based on input
-        if int(userInputLocation) == 0:
-            inputLocation = "inside"
-        elif int(userInputLocation) == 1:
-            inputLocation = "outside"
-        else:
-            raise ValueError("Location not available.")
+        while True:
+            userInputLocation = input(">>> ")
+
+            try:
+                # Convert input to int
+                userInputLocation = int(userInputLocation)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Select location based on input
+            if userInputLocation == 0:
+                inputLocation = "inside"
+                break
+            elif userInputLocation == 1:
+                inputLocation = "outside"
+                break
+            else:
+                # Loop selection in case the input is invalid
+                print("Location not available. Please try again.")
 
         print("Choose a species (ID):")
         showEntryBrief(showAdapter)
