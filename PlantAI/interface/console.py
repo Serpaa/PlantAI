@@ -83,6 +83,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         print("[1] outside")
 
         while True:
+            # Loop selection in case the input is invalid
             userInputLocation = input(">>> ")
 
             try:
@@ -100,12 +101,16 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
                 inputLocation = "outside"
                 break
             else:
-                # Loop selection in case the input is invalid
                 print("Location not available. Please try again.")
 
+        # Check if any species exist
         print("Choose a species (ID):")
-        showEntryBrief(showAdapter)
-        userInputSpecies = input(">>> ")
+        if showAdapter.exists() == 1:
+            showEntryBrief(showAdapter)
+            userInputSpecies = input(">>> ")
+        else:
+            print("No species available to select, please add one first. Returning to menu ...")
+            return
 
         # Fill data with user input
         data = plant(name=userInputName, location=inputLocation, speciesId=userInputSpecies)
@@ -224,11 +229,16 @@ def showEntryBrief(dbAdapter: DBAdapter):
 
 # Assign plant to input channel
 def assignPlant(dbAdapter: DBAdapterPlant):
+    # Check if any plants exist
     print("Choose a plant (ID):")
-    showEntryBrief(dbAdapter)
-    userInputPlant = input(">>> ")
+    if dbAdapter.exists() == 1:
+        showEntryBrief(dbAdapter)
+        userInputPlant = input(">>> ")
+    else:
+        print("No plant available to select, please add one first. Returning to menu ...")
+        return
 
-    print("Choose a input channel (ID):")
+    print("Choose an input channel (ID):")
     userInputChannel = input(">>> ")
 
     # Update input channel
@@ -238,9 +248,14 @@ def assignPlant(dbAdapter: DBAdapterPlant):
 # Import entry
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Imports measurements of the selected plant as CSV."""
+    # Check if any plants exist
     print("Choose a plant (ID) to import the measurements for:")
-    showEntryBrief(showAdapter)
-    userInputId = input(">>> ")
+    if dbAdapter.exists() == 1:
+        showEntryBrief(showAdapter)
+        userInputId = input(">>> ")
+    else:
+        print("No plant available to select, please add one first. Returning to menu ...")
+        return
 
     # Insert new data into database
     path = "PlantAI/resources/measurements.csv"
@@ -256,8 +271,12 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
 def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Exports measurements of the selected plant as CSV."""
     print("Choose a plant (ID) to export the measurements for:")
-    showEntryBrief(showAdapter)
-    userInputId = input(">>> ")
+    if dbAdapter.exists() == 1:
+        showEntryBrief(showAdapter)
+        userInputId = input(">>> ")
+    else:
+        print("No plant available to select, please add one first. Returning to menu ...")
+        return
     
     # Get all objects from database (-1 = unlimited)
     result = dbAdapter.getList(plant=int(userInputId), limit=int(-1), mode="all")

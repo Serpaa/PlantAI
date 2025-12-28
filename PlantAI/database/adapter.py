@@ -15,6 +15,10 @@ class DBAdapter(ABC):
         pass
 
     @abstractmethod
+    def exists(self):
+        pass
+
+    @abstractmethod
     def insert(self):
         pass
 
