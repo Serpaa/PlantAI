@@ -35,6 +35,10 @@ class DBAdapterPlant(DBAdapter):
         for entry in fetchall(query):
             allPlants.append(plant(plantId=entry[0], speciesId=entry[1], name=entry[2], location=entry[3]))
         return allPlants
+    
+    def exists(self) -> int:
+        query = "SELECT EXISTS (SELECT 1 FROM plants)"
+        return fetchone(query,)
 
     def insert(self, data: plant):
         query = "INSERT INTO plants (speciesId, name, location) VALUES (?, ?, ?)"
@@ -65,6 +69,10 @@ class DBAdapterSpecies(DBAdapter):
         for entry in fetchall(query):
             allSpecies.append(species(speciesId=entry[0], name=entry[1], minMoisture=entry[2]))
         return allSpecies
+    
+    def exists(self) -> int:
+        query = "SELECT EXISTS (SELECT 1 FROM species)"
+        return fetchone(query,)
 
     def insert(self, data: species):
         query = "INSERT INTO species (name, minMoisture) VALUES (?, ?)"
@@ -147,6 +155,10 @@ class DBAdapterMeasurement(DBAdapter):
                 measurement(measureId=result[0],plantId=result[1], moisture=result[2], 
                             temperature=result[3], minUntilDry=result[4], timestamp=result[5]))
         return allMeasurements
+    
+    def exists(self) -> int:
+        query = "SELECT EXISTS (SELECT 1 FROM measurements)"
+        return fetchone(query,)
 
     def insert(self, data: measurement):
         """Inserts a new measurement."""

@@ -45,7 +45,7 @@ def execute(query: str, values: tuple = ()):
     # Raise exception if no rows were affected
     if cur.rowcount == 0:
         cur.close()
-        raise Exception("No matching entry found.")
+        raise ValueError("No matching entry found.")
     cur.close()
 
 def fetchone(query: str, values: tuple = ()):
@@ -56,7 +56,7 @@ def fetchone(query: str, values: tuple = ()):
     # Return result
     result = cur.fetchone()
     cur.close()
-    return result
+    return result[0]
 
 def fetchall(query: str, values: tuple = ()):
     """Executes an SQL query and returns a list."""

@@ -129,54 +129,84 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Deletes the selected entry from the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
-        print("Choose a plant to delete (ID):")
-        showEntryBrief(dbAdapter)
-        userInput = input(">>> ")
+        # Check if any plants exist
+        if dbAdapter.exists() == 1:
+            print("Choose a plant to delete (ID):")
+            showEntryBrief(dbAdapter)
+            userInput = input(">>> ")
+        else:
+            print("No plants available to delete.")
+            return
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
-        print("Choose a species to delete (ID):")
-        showEntryBrief(dbAdapter)
-        userInput = input(">>> ")
+        # Check if any species exist
+        if dbAdapter.exists() == 1:
+            print("Choose a species to delete (ID):")
+            showEntryBrief(dbAdapter)
+            userInput = input(">>> ")
+        else:
+            print("No species available to delete.")
+            return
     
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        print("Choose for which plant (ID) to delete the measurements:")
-        showEntryBrief(showAdapter)
-        userInput = input(">>> ")
+        # Check if any measurements exist
+        if dbAdapter.exists() == 1:
+            print("Choose for which plant (ID) to delete the measurements:")
+            showEntryBrief(showAdapter)
+            userInput = input(">>> ")
+        else:
+            print("No measurements available to delete.")
+            return
 
     try:
         # Delete entry from database
         dbAdapter.delete(userInput)
         print(f"Entry {userInput} deleted!")
-    except Exception as ex:
+    except ValueError as ex:
         print(ex)
 
 # Show entries
 def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Prints all entries from a specific table."""
     if isinstance(dbAdapter, DBAdapterPlant):
-        print("[ID | Species (ID) | Name | Location]")
-        print("-------------------------------------")
+        # Check if any plants exist
+        if dbAdapter.exists() == 1:
+            print("[ID | Species (ID) | Name | Location]")
+            print("-------------------------------------")
+        else:
+            print("No plants available to show, please add one first.")
+            return
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
-        print("[ID | Name | min. Moisture]")
-        print("---------------------------")
+        # Check if any species exist
+        if dbAdapter.exists() == 1:
+            print("[ID | Name | min. Moisture]")
+            print("---------------------------")
+        else:
+            print("No species available to show, please add one first.")
+            return
 
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        print("Choose for which plant (ID) to show the measurements:")
-        showEntryBrief(showAdapter)
-        userInputId = input(">>> ")
+        # Check if any measurements exist
+        if dbAdapter.exists() == 1:
+            print("Choose for which plant (ID) to show the measurements:")
+            showEntryBrief(showAdapter)
+            userInputId = input(">>> ")
 
-        print("Choose how many entries:")
-        userInputEntries = input(">>> ")
+            print("Choose how many entries:")
+            userInputEntries = input(">>> ")
 
-        print("[ID | Sensor (ID) | Moisture | Temperature | Minutes until Dry | Timestamp]")
-        print("---------------------------------------------------------------------------")
+            print("[ID | Sensor (ID) | Moisture | Temperature | Minutes until Dry | Timestamp]")
+            print("---------------------------------------------------------------------------")
+        else:
+            print("No measurements available to show.")
+            return
 
     # Get all objects from database
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
         result = dbAdapter.getList()
     elif isinstance(dbAdapter, DBAdapterMeasurement):
-        result = dbAdapter.getList(sensor=int(userInputId), limit=int(userInputEntries), mode="all")
+        result = dbAdapter.getList(plant=int(userInputId), limit=int(userInputEntries), mode="all")
 
     # Print all objects
     for object in result:
