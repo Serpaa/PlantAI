@@ -103,6 +103,14 @@ class DBAdapterPlant(DBAdapter):
         execute(query, values)
 
     def updateChannel(self, plantId: int, channelId: int):
+        """
+        Assign a plant to an input channel.
+        
+        :param plantId: Plant to be assigned.
+        :type plantId: int
+        :param channelId: Input channel the plant is assigned to.
+        :type channelId: int
+        """
         query = "UPDATE channel SET plantId = ? WHERE channelId = ?"
         values = (plantId, channelId)
         execute(query, values)
