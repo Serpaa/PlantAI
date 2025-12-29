@@ -14,7 +14,7 @@ class plant:
     
     def strDetail(self) -> str:
         """Returns a complete description of the datatype plant."""
-        return f"[{self.plantId} | {self.speciesId} | {self.name} | {self.location}]"
+        return f"[{self.plantId}]:[{self.speciesId}] {self.name} -> {self.location}"
 
     def strBrief(self) -> str:
         """Returns a brief description of the datatype plant."""
@@ -28,7 +28,7 @@ class species:
 
     def strDetail(self) -> str:
         """Returns a complete description of the datatype species."""
-        return f"[{self.speciesId} | {self.name} | {self.minMoisture}]"
+        return f"[{self.speciesId}] {self.name} -> {self.minMoisture}%"
     
     def strBrief(self) -> str:
         """Returns a brief description of the datatype species."""
@@ -45,5 +45,5 @@ class measurement:
     
     def strDetail(self) -> str:
         """Returns a complete description of the datatype measurement."""
-        return f"[{self.measureId} | {self.plantId} | {self.moisture:.2f} | {self.temperature:.2f} | {self.minUntilDry} | {self.timestamp}]"
+        return f"[{self.measureId}]:[{self.plantId}] -> {self.moisture:.2f}% - {self.temperature:.2f}°C - {self.minUntilDry}min - [{self.timestamp}]"
         

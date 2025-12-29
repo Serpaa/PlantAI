@@ -247,8 +247,8 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     if isinstance(dbAdapter, DBAdapterPlant):
         # Check if any plants exist
         if dbAdapter.exists() == 1:
-            print("[ID | Species (ID) | Name | Location]")
-            print("-------------------------------------")
+            print("[ID]:[SpeciesID] Name -> Location")
+            print("---------------------------------")
         else:
             print("No plants available to show, please add one first.")
             return
@@ -256,8 +256,8 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     elif isinstance(dbAdapter, DBAdapterSpecies):
         # Check if any species exist
         if dbAdapter.exists() == 1:
-            print("[ID | Name | min. Moisture]")
-            print("---------------------------")
+            print("[ID] Name -> min. Moisture")
+            print("--------------------------")
         else:
             print("No species available to show, please add one first.")
             return
@@ -272,8 +272,8 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("Choose how many entries:")
             userInputEntries = input(">>> ")
 
-            print("[ID | Sensor (ID) | Moisture | Temperature | Minutes until Dry | Timestamp]")
-            print("---------------------------------------------------------------------------")
+            print("[ID]:[PlantID] -> Moisture - Temperature - Minutes until Dry - [Timestamp]")
+            print("--------------------------------------------------------------------------")
         else:
             print("No measurements available to show.")
             return
