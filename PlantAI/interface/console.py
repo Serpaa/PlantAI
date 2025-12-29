@@ -46,8 +46,13 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 showEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
-        elif "assign" in userInput:
-            assignPlant(dbAdapterPlant)
+        elif "channel" in userInput:
+            if "assign" in userInput:
+                assignChannel(dbAdapterPlant)
+            elif "view" in userInput:
+                showChannel(dbAdapterPlant)
+            else:
+                unknown()
         elif "csv" in userInput:
             if "import" in userInput:
                 importEntry(dbAdapterMeasurement, dbAdapterPlant)
@@ -291,10 +296,11 @@ def showEntryBrief(dbAdapter: DBAdapter):
         for object in result:
             print(object.strBrief())
 
-# Assign plant to input channel
-def assignPlant(dbAdapter: DBAdapterPlant):
+def assignChannel(dbAdapter: DBAdapterPlant):
+    """Assign an input channel to a plant."""
     # Check if any plants exist
     print("Choose a plant (ID):")
+    print("[0] * None * ")
     if dbAdapter.exists() == 1:
         showEntryBrief(dbAdapter)
 
@@ -309,8 +315,8 @@ def assignPlant(dbAdapter: DBAdapterPlant):
                 print("Please enter a number.")
                 continue
 
-            # Check if selected species exists
-            if dbAdapter.existsId(userInputPlant) == 1:
+            # Check if selected species exists or user wants to unassign
+            if dbAdapter.existsId(userInputPlant) == 1 or userInputPlant == 0:
                 break
             else:
                 print("Selected plant doesn't exist. Please try again.")
@@ -320,13 +326,7 @@ def assignPlant(dbAdapter: DBAdapterPlant):
         return
 
     print("Choose an input channel (ID):")
-
-    # Get all input channels and show how they are assigned
-    for entry in dbAdapter.getChannel():
-        if entry[2] == None:
-            print(f"[{entry[0]}] {entry[1]} -> {entry[3]}")
-        else:
-            print(f"[{entry[0]}] {entry[1]} -> [{entry[2]}] {entry[3]}")
+    showChannel(dbAdapter)
 
     while True:
         # Loop in case the input is invalid
@@ -346,8 +346,24 @@ def assignPlant(dbAdapter: DBAdapterPlant):
             print("Channel not available. Please try again.")
 
     # Update input channel
-    dbAdapter.updateChannel(userInputPlant, userInputChannel)
-    print(f"Plant {userInputPlant} assigned to channel {userInputChannel}!")
+    if userInputPlant == 0:
+        # Unassign channel
+        dbAdapter.updateChannel(None, userInputChannel)
+        print(f"Channel {userInputChannel} unassigned!")
+    else:
+        # Assign channel to plant
+        dbAdapter.updateChannel(userInputPlant, userInputChannel)
+        print(f"Plant {userInputPlant} assigned to channel {userInputChannel}!")
+
+def showChannel(dbAdapter: DBAdapterPlant):
+    """Prints a description of all input channels and their assigned plants."""
+    # Get all input channels
+    for entry in dbAdapter.getChannel():
+        if entry[2] == None:
+            # don't show plant name if no plant is assigned
+            print(f"[{entry[0]}] {entry[1]} -> {entry[3]}")
+        else:
+            print(f"[{entry[0]}] {entry[1]} -> [{entry[2]}] {entry[3]}")
 
 # Import entry
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
@@ -455,7 +471,7 @@ def help():
     print("  add [plant,species]                Add a new plant or species")
     print("  delete [plant,species,measure]     Delete a plant, species or measurement")
     print("  show [plant,species,measure]       Show all plants, species or measurements")
-    print("  assign [plant]                     Assign a plant to an input channel")
+    print("  channel [assign,unassign,view]     Assign, unassign or view input channels")
     print("  csv [import,export]                Imports or exports all measurements using CSV")
     print("  model [train,predict]              Manually train the model or predict minUntilDry")
     print("  weather                            Show weather forecast")
