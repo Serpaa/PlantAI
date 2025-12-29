@@ -143,6 +143,13 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("No plants available to delete.")
             return
 
+        try:
+            # Delete entry from database
+            dbAdapter.delete(userInput)
+            print(f"Plant {userInput} deleted!")
+        except ValueError as ex:
+            print(ex)
+
     elif isinstance(dbAdapter, DBAdapterSpecies):
         # Check if any species exist
         if dbAdapter.exists() == 1:
@@ -152,6 +159,13 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         else:
             print("No species available to delete.")
             return
+        
+        try:
+            # Delete entry from database
+            dbAdapter.delete(userInput)
+            print(f"Species {userInput} deleted!")
+        except ValueError as ex:
+            print(ex)
     
     elif isinstance(dbAdapter, DBAdapterMeasurement):
         # Check if any measurements exist
@@ -163,12 +177,12 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("No measurements available to delete.")
             return
 
-    try:
-        # Delete entry from database
-        dbAdapter.delete(userInput)
-        print(f"Entry {userInput} deleted!")
-    except ValueError as ex:
-        print(ex)
+        try:
+            # Delete entry from database
+            dbAdapter.delete(userInput)
+            print(f"Measurements of plant {userInput} deleted!")
+        except ValueError as ex:
+            print(ex)
 
 # Show entries
 def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
