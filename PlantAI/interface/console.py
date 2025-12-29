@@ -76,7 +76,6 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
         else:
             unknown()
 
-# Add new entry
 def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Add a new entry to the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
@@ -185,7 +184,6 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     # Add entry to database
     dbAdapter.insert(data)
 
-# Delete entry
 def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Deletes the selected entry from the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
@@ -239,7 +237,6 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         except ValueError:
             print("No matching measurements found. Returning to menu ...")
 
-# Show entries
 def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Prints all entries from a specific table."""
     if isinstance(dbAdapter, DBAdapterPlant):
@@ -286,7 +283,6 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     for object in result:
         print(object.strDetail())
 
-# Show entries (brief)
 def showEntryBrief(dbAdapter: DBAdapter):
     """Prints a brief description from a specific table."""
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
@@ -365,7 +361,6 @@ def showChannel(dbAdapter: DBAdapterPlant):
         else:
             print(f"[{entry[0]}] {entry[1]} -> [{entry[2]}] {entry[3]}")
 
-# Import entry
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Imports measurements of the selected plant as CSV."""
     # Check if any plants exist
@@ -403,7 +398,6 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
         print(f"Import failed! No measurement file found.")
         logging.error(f"Import failed! No such file: {path}")
 
-# Export entry
 def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Exports measurements of the selected plant as CSV."""
     print("Choose a plant (ID) to export the measurements for:")
@@ -438,11 +432,10 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
-# Train model
 def train(dbAdapter : DBAdapterMeasurement):
+    """Manually trains the model."""
     trainModel(dbAdapter)
 
-# Predictions
 def predict():
     """Predicts in how many minutes the plant has to be watered again."""
     # Get moisture and time until dry
@@ -455,7 +448,6 @@ def predict():
     else:
         print(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
 
-# Show weather
 def weather():
     """Prints a weather forecast of the current location."""
     try:
@@ -464,26 +456,23 @@ def weather():
     except (ValueError, ConnectionError) as ex:
         print(ex)
 
-# Show help
 def help():
     """Prints the help menu."""
     print("Available commands:")
     print("  add [plant,species]                Add a new plant or species")
     print("  delete [plant,species,measure]     Delete a plant, species or measurement")
     print("  show [plant,species,measure]       Show all plants, species or measurements")
-    print("  channel [assign,unassign,view]     Assign, unassign or view input channels")
+    print("  channel [assign,view]              Assign, unassign or view input channels")
     print("  csv [import,export]                Imports or exports all measurements using CSV")
     print("  model [train,predict]              Manually train the model or predict minUntilDry")
     print("  weather                            Show weather forecast")
     print("  help                               Show this help message")
     print("  exit,bye                           Exit")
 
-# Unknown command
 def unknown():
     """Prints unknown command."""
     print("Unknown command. Type 'help' for a list of commands.")
 
-# Exit
 def bye():
     """Exits the system."""
     print("Goodbye!")
