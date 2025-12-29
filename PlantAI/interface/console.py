@@ -6,6 +6,7 @@ Created: 30.09.2025
 """
 
 import logging, sys
+from sqlite3 import IntegrityError
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from core.measurements import readMoisture
@@ -202,6 +203,8 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print(f"Plant {userInput} deleted!")
         except ValueError:
             print("No matching plant found. Returning to menu ...")
+        except IntegrityError:
+            print("Plant can't be deleted, measurements of this plant still exist.")
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
         # Check if any species exist
@@ -219,6 +222,8 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print(f"Species {userInput} deleted!")
         except ValueError:
             print("No matching species found. Returning to menu ...")
+        except IntegrityError:
+            print("Species can't be deleted, a plant of this species still exists.")
     
     elif isinstance(dbAdapter, DBAdapterMeasurement):
         # Check if any measurements exist
