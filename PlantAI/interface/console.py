@@ -76,7 +76,16 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     """Add a new entry to the database."""
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a name:")
-        userInputName = input(">>> ")
+
+        while True:
+            # Loop in case the input is empty
+            userInputName = input(">>> ")
+
+            # Remove whitespaces before checking
+            if userInputName.strip() != "":
+                break
+            else:
+                print("Please enter a valid name.")
 
         print("Choose a location:")
         print("[0] inside")
@@ -107,7 +116,18 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         print("Choose a species (ID):")
         if showAdapter.exists() == 1:
             showEntryBrief(showAdapter)
-            userInputSpecies = input(">>> ")
+
+            while True:
+                # Loop in case the input is invalid
+                userInputSpecies = input(">>> ")
+
+                try:
+                    # Convert input to int
+                    userInputSpecies = int(userInputSpecies)
+                    break
+                except ValueError:
+                    print("Please enter a number.")
+                    continue
         else:
             print("No species available to select, please add one first. Returning to menu ...")
             return
@@ -118,10 +138,35 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
         print("Choose a name:")
-        userInputName = input(">>> ")
 
-        print("Choose a min. Moisture:")
-        userInputMoisture = input(">>> ")
+        while True:
+            # Loop in case the input is empty
+            userInputName = input(">>> ")
+
+            # Remove whitespaces before checking
+            if userInputName.strip() != "":
+                break
+            else:
+                print("Please enter a valid name.")
+
+        print("Set the min. Moisture:")
+
+        while True:
+            # Loop in case the input is invalid
+            userInputMoisture = input(">>> ")
+
+            try:
+                # Convert input to float
+                userInputMoisture = float(userInputMoisture)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Check if input is between 5.0 and 50.0%
+            if 5.0 < userInputMoisture <= 50.0:
+                break
+            else:
+                print("Please enter a valid number between 5.0 and 50.0% moisture.")
 
         # Fill data with user input
         data = species(name=userInputName, minMoisture=userInputMoisture)
