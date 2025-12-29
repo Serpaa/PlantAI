@@ -11,27 +11,66 @@ from core.models import plant, species, measurement
 
 class DBAdapter(ABC):
     @abstractmethod
-    def getList(self):
+    def getList(self) -> list:
+        """
+        Returns a list with all entries.
+        
+        :return: List with all entries.
+        :rtype: list[plant, species, measurement]
+        """
         pass
 
     @abstractmethod
-    def exists(self):
+    def exists(self) -> int:
+        """
+        Checks if any entries exist in the database table.
+        
+        :return: Returns true if entries exist.
+        :rtype: bool
+        """
         pass
 
     @abstractmethod
-    def existsEntry(self):
+    def existsId(self, id: int) -> int:
+        """
+        Checks if an entry with a matching ID exist in the database table.
+        
+        :param id: Entry to check for.
+        :type id: int
+
+        :return: Returns true if a matching entry exist.
+        :rtype: bool
+        """
         pass
 
     @abstractmethod
-    def insert(self):
+    def insert(self, data):
+        """
+        Inserts a new database entry.
+        
+        :param data: New entry.
+        :type data: plant, species, measurement
+        """
         pass
 
     @abstractmethod
-    def update(self):
+    def update(self, data):
+        """
+        Updates the selected database entry with new values.
+        
+        :param data: Entry with updated values.
+        :type data: plant, species, measurement
+        """
         pass
 
     @abstractmethod
-    def delete(self):
+    def delete(self, data: int):
+        """
+        Deletes the selected database entry.
+        
+        :param data: Entry to delete.
+        :type data: int
+        """
         pass
 
 class DBAdapterPlant(DBAdapter):
@@ -48,7 +87,7 @@ class DBAdapterPlant(DBAdapter):
         query = "SELECT EXISTS (SELECT 1 FROM plants)"
         return fetchone(query,)
 
-    def existsEntry(self, id: int) -> int:
+    def existsId(self, id: int) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants WHERE plantId = ?)"
         values = (id,)
         return fetchone(query, values)
@@ -87,7 +126,7 @@ class DBAdapterSpecies(DBAdapter):
         query = "SELECT EXISTS (SELECT 1 FROM species)"
         return fetchone(query,)
     
-    def existsEntry(self, id: int) -> int:
+    def existsId(self, id: int) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM species WHERE speciesId = ?)"
         values = (id,)
         return fetchone(query, values)
@@ -112,9 +151,16 @@ class DBAdapterMeasurement(DBAdapter):
         """
         Returns a single measurement.
 
-        mode:
-            - "recent": The most recent measurement.
-            - "old": The oldest non-archived (minUntilDry = -1) measurement.
+        :param plant: Plant the measurement belongs to.
+        :type plant: int
+        :param mode:
+            Sets the mode which measurement is returned: \n
+            - [recent]: Returns the most recent measurement.
+            - [old]: The oldest non-archived (minUntilDry = -1) measurement.
+        :type mode: str
+
+        :return: Returns a single measurement.
+        :rtype: measurement
         """
 
         # Select ORDER BY direction
@@ -142,10 +188,17 @@ class DBAdapterMeasurement(DBAdapter):
         """
         Returns a list with measurements sorted from old to new.
 
-        mode:
-            - "archived": Only archived measurements.
-            - "current": Only non-archived (minUntilDry = -1) measurements.
-            - "all": All saved measurements.
+        :param plant: Plant the measurements belong to.
+        :type plant: int
+        :param mode:
+            Sets the mode which measurements are returned: \n
+            - [archived]: Only archived measurements.
+            - [current]: Only non-archived (minUntilDry = -1) measurements.
+            - [all]: All saved measurements.
+        :type mode: str
+
+        :return: Returns a list with measurements.
+        :rtype: list[measurement]
         """
 
         # Select WHERE clause
@@ -175,30 +228,25 @@ class DBAdapterMeasurement(DBAdapter):
         return allMeasurements
     
     def exists(self) -> int:
-        """Checks if any measurements exist."""
         query = "SELECT EXISTS (SELECT 1 FROM measurements)"
         return fetchone(query,)
     
-    def existsEntry(self, id: int):
-        """Checks if a measurement with the provided ID exists."""
+    def existsId(self, id: int):
         query = "SELECT EXISTS (SELECT 1 FROM measurements WHERE measureId = ?)"
         values = (id,)
         return fetchone(query, values)
 
     def insert(self, data: measurement):
-        """Inserts a new measurement."""
         query = "INSERT INTO measurements (plantId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
         values = (data.plantId, data.moisture, data.temperature, data.minUntilDry, data.timestamp)
         execute(query, values)
 
     def update(self, id: int, min: int):
-        """Updates minUntilDry for the chosen measureId."""
         query = "UPDATE measurements SET minUntilDry = ? WHERE measureId = ?"
         values = (min, id)
         execute(query, values)
 
     def delete(self, data: int):
-        """Deletes all measurements for the chosen plantId."""
         query = "DELETE FROM measurements WHERE plantId = ?"
         values = (data,)
         execute(query, values)

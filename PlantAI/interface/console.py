@@ -129,7 +129,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
                     continue
 
                 # Check if selected species exists
-                if showAdapter.existsEntry(userInputSpecies) == 1:
+                if showAdapter.existsId(userInputSpecies) == 1:
                     break
                 else:
                     print("Selected species doesn't exist. Please try again.")
@@ -310,7 +310,7 @@ def assignPlant(dbAdapter: DBAdapterPlant):
                 continue
 
             # Check if selected species exists
-            if dbAdapter.existsEntry(userInputPlant) == 1:
+            if dbAdapter.existsId(userInputPlant) == 1:
                 break
             else:
                 print("Selected plant doesn't exist. Please try again.")
@@ -364,7 +364,7 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
                 continue
 
             # Check if selected species exists
-            if showAdapter.existsEntry(userInputId) == 1:
+            if showAdapter.existsId(userInputId) == 1:
                 break
             else:
                 print("Selected plant doesn't exist. Please try again.")
@@ -401,7 +401,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
                 continue
 
             # Check if selected species exists
-            if showAdapter.existsEntry(userInputId) == 1:
+            if showAdapter.existsId(userInputId) == 1:
                 break
             else:
                 print("Selected plant doesn't exist. Please try again.")
