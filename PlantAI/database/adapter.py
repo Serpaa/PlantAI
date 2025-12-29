@@ -19,6 +19,10 @@ class DBAdapter(ABC):
         pass
 
     @abstractmethod
+    def existsEntry(self):
+        pass
+
+    @abstractmethod
     def insert(self):
         pass
 
@@ -43,6 +47,11 @@ class DBAdapterPlant(DBAdapter):
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants)"
         return fetchone(query,)
+
+    def existsEntry(self, id: int) -> int:
+        query = "SELECT EXISTS (SELECT 1 FROM plants WHERE plantId = ?)"
+        values = (id,)
+        return fetchone(query, values)
 
     def insert(self, data: plant):
         query = "INSERT INTO plants (speciesId, name, location) VALUES (?, ?, ?)"
@@ -77,6 +86,11 @@ class DBAdapterSpecies(DBAdapter):
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM species)"
         return fetchone(query,)
+    
+    def existsEntry(self, id: int) -> int:
+        query = "SELECT EXISTS (SELECT 1 FROM species WHERE speciesId = ?)"
+        values = (id,)
+        return fetchone(query, values)
 
     def insert(self, data: species):
         query = "INSERT INTO species (name, minMoisture) VALUES (?, ?)"
@@ -161,8 +175,15 @@ class DBAdapterMeasurement(DBAdapter):
         return allMeasurements
     
     def exists(self) -> int:
+        """Checks if any measurements exist."""
         query = "SELECT EXISTS (SELECT 1 FROM measurements)"
         return fetchone(query,)
+    
+    def existsEntry(self, id: int):
+        """Checks if a measurement with the provided ID exists."""
+        query = "SELECT EXISTS (SELECT 1 FROM measurements WHERE measureId = ?)"
+        values = (id,)
+        return fetchone(query, values)
 
     def insert(self, data: measurement):
         """Inserts a new measurement."""

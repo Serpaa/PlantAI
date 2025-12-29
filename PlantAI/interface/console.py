@@ -124,10 +124,15 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
                 try:
                     # Convert input to int
                     userInputSpecies = int(userInputSpecies)
-                    break
                 except ValueError:
                     print("Please enter a number.")
                     continue
+
+                # Check if selected species exists
+                if showAdapter.existsEntry(userInputSpecies) == 1:
+                    break
+                else:
+                    print("Selected species doesn't exist. Please try again.")
         else:
             print("No species available to select, please add one first. Returning to menu ...")
             return
@@ -192,8 +197,8 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             # Delete entry from database
             dbAdapter.delete(userInput)
             print(f"Plant {userInput} deleted!")
-        except ValueError as ex:
-            print(ex)
+        except ValueError:
+            print("No matching plant found. Returning to menu ...")
 
     elif isinstance(dbAdapter, DBAdapterSpecies):
         # Check if any species exist
@@ -209,8 +214,8 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             # Delete entry from database
             dbAdapter.delete(userInput)
             print(f"Species {userInput} deleted!")
-        except ValueError as ex:
-            print(ex)
+        except ValueError:
+            print("No matching species found. Returning to menu ...")
     
     elif isinstance(dbAdapter, DBAdapterMeasurement):
         # Check if any measurements exist
@@ -226,8 +231,8 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             # Delete entry from database
             dbAdapter.delete(userInput)
             print(f"Measurements of plant {userInput} deleted!")
-        except ValueError as ex:
-            print(ex)
+        except ValueError:
+            print("No matching measurements found. Returning to menu ...")
 
 # Show entries
 def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
@@ -292,13 +297,48 @@ def assignPlant(dbAdapter: DBAdapterPlant):
     print("Choose a plant (ID):")
     if dbAdapter.exists() == 1:
         showEntryBrief(dbAdapter)
-        userInputPlant = input(">>> ")
+
+        while True:
+            # Loop in case the input is invalid
+            userInputPlant = input(">>> ")
+
+            try:
+                # Convert input to int
+                userInputPlant = int(userInputPlant)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Check if selected species exists
+            if dbAdapter.existsEntry(userInputPlant) == 1:
+                break
+            else:
+                print("Selected plant doesn't exist. Please try again.")
+
     else:
         print("No plant available to select, please add one first. Returning to menu ...")
         return
 
     print("Choose an input channel (ID):")
-    userInputChannel = input(">>> ")
+    print("[1] ADS1115 Channel 0-1")
+    print("[2] ADS1115 Channel 2-3")
+
+    while True:
+        # Loop in case the input is invalid
+        userInputChannel = input(">>> ")
+
+        try:
+            # Convert input to int
+            userInputChannel = int(userInputChannel)
+        except ValueError:
+            print("Please enter a number.")
+            continue
+
+        # Check if channel is available
+        if userInputChannel == 1 or userInputChannel == 2:
+            break
+        else:
+            print("Channel not available. Please try again.")
 
     # Update input channel
     dbAdapter.updateChannel(userInputPlant, userInputChannel)
@@ -309,11 +349,27 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Imports measurements of the selected plant as CSV."""
     # Check if any plants exist
     print("Choose a plant (ID) to import the measurements for:")
-    if dbAdapter.exists() == 1:
+    if showAdapter.exists() == 1:
         showEntryBrief(showAdapter)
-        userInputId = input(">>> ")
+
+        while True:
+            # Loop in case the input is invalid
+            userInputId = input(">>> ")
+
+            try:
+                # Convert input to int
+                userInputId = int(userInputId)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Check if selected species exists
+            if showAdapter.existsEntry(userInputId) == 1:
+                break
+            else:
+                print("Selected plant doesn't exist. Please try again.")
     else:
-        print("No plant available to select, please add one first. Returning to menu ...")
+        print("No plant available to select, please add one first.")
         return
 
     # Insert new data into database
@@ -330,11 +386,27 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
 def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Exports measurements of the selected plant as CSV."""
     print("Choose a plant (ID) to export the measurements for:")
-    if dbAdapter.exists() == 1:
+    if showAdapter.exists() == 1:
         showEntryBrief(showAdapter)
-        userInputId = input(">>> ")
+
+        while True:
+            # Loop in case the input is invalid
+            userInputId = input(">>> ")
+
+            try:
+                # Convert input to int
+                userInputId = int(userInputId)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Check if selected species exists
+            if showAdapter.existsEntry(userInputId) == 1:
+                break
+            else:
+                print("Selected plant doesn't exist. Please try again.")
     else:
-        print("No plant available to select, please add one first. Returning to menu ...")
+        print("No plant available to select, please add one first.")
         return
     
     # Get all objects from database (-1 = unlimited)
