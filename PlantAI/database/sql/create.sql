@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS channel (
     channelId INTEGER PRIMARY KEY,
     plantId INTEGER,
     desc VARCHAR(40),
-    FOREIGN KEY (plantId) REFERENCES plants(plantId)
+    FOREIGN KEY (plantId) REFERENCES plants(plantId) ON DELETE SET NULL
 );
 
 -- Add default entries for channels

@@ -11,6 +11,9 @@ def connect():
     """Connect to the SQLite Database."""
     path = "PlantAI/database/PlantAI.db"
     con = sqlite3.connect(path)
+    
+    # Enforce foreign keys for connection
+    con.execute("PRAGMA foreign_keys = ON")
     return con, con.cursor()
 
 def createDB(path: str):
