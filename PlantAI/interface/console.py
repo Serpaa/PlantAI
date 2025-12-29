@@ -19,7 +19,7 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
     print("Welcome to PlantAI!")
     while True:
         # Wait for user input
-        userInput = input(">>> ")
+        userInput = input("(main) >>> ")
 
         # Choose action based on input
         if "add" in userInput:
@@ -84,7 +84,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 
         while True:
             # Loop in case the input is empty
-            userInputName = input(">>> ")
+            userInputName = input("(add) >>> ")
 
             # Remove whitespaces before checking
             if userInputName.strip() != "":
@@ -98,7 +98,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 
         while True:
             # Loop selection in case the input is invalid
-            userInputLocation = input(">>> ")
+            userInputLocation = input("(add) >>> ")
 
             try:
                 # Convert input to int
@@ -124,7 +124,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 
             while True:
                 # Loop in case the input is invalid
-                userInputSpecies = input(">>> ")
+                userInputSpecies = input("(add) >>> ")
 
                 try:
                     # Convert input to int
@@ -151,7 +151,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 
         while True:
             # Loop in case the input is empty
-            userInputName = input(">>> ")
+            userInputName = input("(add) >>> ")
 
             # Remove whitespaces before checking
             if userInputName.strip() != "":
@@ -163,7 +163,7 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
 
         while True:
             # Loop in case the input is invalid
-            userInputMoisture = input(">>> ")
+            userInputMoisture = input("(add) >>> ")
 
             try:
                 # Convert input to float
@@ -192,7 +192,7 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         if dbAdapter.exists() == 1:
             print("Choose a plant to delete (ID):")
             showEntryBrief(dbAdapter)
-            userInput = input(">>> ")
+            userInput = input("(delete) >>> ")
         else:
             print("No plants available to delete.")
             return
@@ -211,7 +211,7 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         if dbAdapter.exists() == 1:
             print("Choose a species to delete (ID):")
             showEntryBrief(dbAdapter)
-            userInput = input(">>> ")
+            userInput = input("(delete) >>> ")
         else:
             print("No species available to delete.")
             return
@@ -230,7 +230,7 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         if dbAdapter.exists() == 1:
             print("Choose for which plant (ID) to delete the measurements:")
             showEntryBrief(showAdapter)
-            userInput = input(">>> ")
+            userInput = input("(delete) >>> ")
         else:
             print("No measurements available to delete.")
             return
@@ -267,10 +267,10 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         if dbAdapter.exists() == 1:
             print("Choose for which plant (ID) to show the measurements:")
             showEntryBrief(showAdapter)
-            userInputId = input(">>> ")
+            userInputId = input("(show) >>> ")
 
             print("Choose how many entries:")
-            userInputEntries = input(">>> ")
+            userInputEntries = input("(show) >>> ")
 
             print("[ID]:[PlantID] -> Moisture - Temperature - Minutes until Dry - [Timestamp]")
             print("--------------------------------------------------------------------------")
@@ -307,7 +307,7 @@ def assignChannel(dbAdapter: DBAdapterPlant):
 
         while True:
             # Loop in case the input is invalid
-            userInputPlant = input(">>> ")
+            userInputPlant = input("(channel) >>> ")
 
             try:
                 # Convert input to int
@@ -331,7 +331,7 @@ def assignChannel(dbAdapter: DBAdapterPlant):
 
     while True:
         # Loop in case the input is invalid
-        userInputChannel = input(">>> ")
+        userInputChannel = input("(channel) >>> ")
 
         try:
             # Convert input to int
@@ -375,7 +375,7 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
 
         while True:
             # Loop in case the input is invalid
-            userInputId = input(">>> ")
+            userInputId = input("(csv) >>> ")
 
             try:
                 # Convert input to int
@@ -411,7 +411,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
 
         while True:
             # Loop in case the input is invalid
-            userInputId = input(">>> ")
+            userInputId = input("(csv) >>> ")
 
             try:
                 # Convert input to int
