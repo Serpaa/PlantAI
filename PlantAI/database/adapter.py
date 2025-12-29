@@ -83,6 +83,19 @@ class DBAdapterPlant(DBAdapter):
             allPlants.append(plant(plantId=entry[0], speciesId=entry[1], name=entry[2], location=entry[3]))
         return allPlants
     
+    def getChannel(self) -> list:
+        """
+        Returns a list of all input channels with their assigned plants.
+
+        :return: List with input channels.
+        :rtype: list[]
+        """
+        query = """
+            SELECT c.channelId, c.desc, c.plantId, p.name FROM channel AS c
+            LEFT JOIN plants AS p ON c.plantId = p.plantId
+            """
+        return fetchall(query)
+    
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants)"
         return fetchone(query,)
@@ -167,7 +180,7 @@ class DBAdapterMeasurement(DBAdapter):
             - [old]: The oldest non-archived (minUntilDry = -1) measurement.
         :type mode: str
 
-        :return: Returns a single measurement.
+        :return: Single measurement.
         :rtype: measurement
         """
 
@@ -205,7 +218,7 @@ class DBAdapterMeasurement(DBAdapter):
             - [all]: All saved measurements.
         :type mode: str
 
-        :return: Returns a list with measurements.
+        :return: List with measurements.
         :rtype: list[measurement]
         """
 

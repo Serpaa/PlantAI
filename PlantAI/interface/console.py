@@ -320,8 +320,13 @@ def assignPlant(dbAdapter: DBAdapterPlant):
         return
 
     print("Choose an input channel (ID):")
-    print("[1] ADS1115 Channel 0-1")
-    print("[2] ADS1115 Channel 2-3")
+
+    # Get all input channels and show how they are assigned
+    for entry in dbAdapter.getChannel():
+        if entry[2] == None:
+            print(f"[{entry[0]}] {entry[1]} -> {entry[3]}")
+        else:
+            print(f"[{entry[0]}] {entry[1]} -> [{entry[2]}] {entry[3]}")
 
     while True:
         # Loop in case the input is invalid
