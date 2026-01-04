@@ -9,6 +9,7 @@ import logging
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+from joblib import dump, load
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
@@ -16,13 +17,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
 from database.adapter import DBAdapterMeasurement
 
-# Prepare pipeline and dictionary
-pipes = {}
-defaultPipe = Pipeline([
-    ('model', RandomForestRegressor())
-])
-
-def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement, mode : str = None):
+def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
     """
     Trains the model of a plant using the archived measurements, skips if no archived measurements are found.
     
@@ -30,18 +25,10 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement, mode : str = None
     :type plantId: int
     :param dbAdapter: Database adapter to access the measurements.
     :type dbAdapter: DBAdapterMeasurement
-    :param mode: 
-        Sets the mode how the model is trained: \n
-        - [verbose]: Print additional information.
-    :type mode: str
     """
     # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []
     allMeasurements = dbAdapter.getList(plantId, -1, "archived")
-
-    # Print feedback
-    if mode == "verbose":
-        print(f"Plant {plantId}: Training Random Forest Model...", end="\r")
 
     # Skip training if no archived measurements are returned
     if len(allMeasurements) > 0:
@@ -67,30 +54,22 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement, mode : str = None
         # random_state makes sure the data is always mixed the same way (only for testing)
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=42)
 
-        # Check if pipe is missing from dict
-        if plantId not in pipes:
-            # Add new pipe to dict
-            pipes[plantId] = defaultPipe
-
-        # Get pipe from dict
-        pipe: Pipeline = pipes[plantId]
+        # Prepare pipeline
+        pipe = Pipeline([
+            ('model', RandomForestRegressor())
+        ])
 
         # Train model with data
         pipe.fit(X_train, y_train)
         logging.info(f"Plant {plantId}: Random Forest Model trained with {len(allMeasurements)} measurements.")
 
-        # Print feedback
-        if mode == "verbose":
-            print(f"Plant {plantId}: Finished training model with {len(allMeasurements)} measurements!")
+        # Save model to persistence
+        dump(pipe, f"PlantAI/resources/models/pipeline_{plantId}.joblib")
 
         # Create evaluation
         evaluation(pipe, X_test, y_test)
     else:
         logging.warning(f"Plant {plantId}: Random Forest Model training skipped, no archived measurements found.")
-
-        # Print feedback
-        if mode == "verbose":
-            print(f"Plant {plantId}: Training model skipped, no archived measurements found.")
 
 def evaluation(pipe: Pipeline, X_test : list, y_test : list):
     """
@@ -124,11 +103,11 @@ def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
     :rtype: int, int
     """
     try:
-        # Get pipe from dict
-        pipe: Pipeline = pipes[plantId]
-    except KeyError as ex:
-        # Return none if Pipeline doesn't exist yet
-        logging.error(f"Prediction failed: Pipeline {ex} doesn't exist yet.")
+        # Load pipe from persistence
+        pipe: Pipeline = load(f"PlantAI/resources/models/pipeline_{plantId}.joblib")
+    except FileNotFoundError:
+        # Return none if Pipeline doesn't exist
+        logging.error(f"Prediction failed: Model hasn't been trained yet.")
         return None, None
     
     try:

@@ -7,10 +7,11 @@ Created: 24.09.2025
 
 import os, logging, threading
 
-# Create archive folder for logs
-archivePath = "PlantAI/resources/archive"
-if not os.path.exists(archivePath):
-    os.mkdir(archivePath)
+# Create archive and model folders
+folders = ["PlantAI/resources/archive", "PlantAI/resources/models"]
+for paths in folders:
+    if not os.path.exists(paths):
+        os.mkdir(paths)
 
 # Create log file
 from system.streams import initLog
@@ -41,10 +42,6 @@ threadSensor.start()
 # Start new thread for voice detection
 threadVAD = threading.Thread(target=vad, daemon=True)
 threadVAD.start()
-
-# Train model of each assigned channel
-for ch in dbAdapterPlant.getChannel("assigned"):
-    trainModel(ch.plantId, dbAdapterMeasurement, "verbose")
 
 # Logs
 logging.info("System booted.")
