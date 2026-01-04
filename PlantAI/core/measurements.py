@@ -137,7 +137,7 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                         setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, recentMeasurement)
 
                         # Train model using the now archived measurements
-                        trainModel(dbAdapterMeasurement)
+                        trainModel(ch.plantId, dbAdapterMeasurement)
                         skipInsert = True
 
                     # Skip insert after minutes until dry were set

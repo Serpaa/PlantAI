@@ -41,8 +41,9 @@ threadSensor.start()
 threadVAD = threading.Thread(target=vad, daemon=True)
 threadVAD.start()
 
-# Train model
-trainModel(dbAdapterMeasurement, "BOOT")
+# Train model of each assigned channel
+for ch in dbAdapterPlant.getChannel("assigned"):
+    trainModel(ch.plantId, dbAdapterMeasurement, "verbose")
 
 # Logs
 logging.info("System booted.")

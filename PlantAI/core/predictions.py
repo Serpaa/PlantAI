@@ -21,20 +21,24 @@ pipe = Pipeline([
     ('model', RandomForestRegressor())
 ])
 
-def trainModel(dbAdapter : DBAdapterMeasurement, mode : str = None):
+def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement, mode : str = None):
     """
-    Trains the Random Forest Model using the archived measurements, skips if no archived measurements are found.
+    Trains the model of a plant using the archived measurements, skips if no archived measurements are found.
     
+    :param plantId: Measurements of this PlantID are used to train the model.
+    :type plantId: int
     :param dbAdapter: Database adapter to access the measurements.
     :type dbAdapter: DBAdapterMeasurement
-    :param mode: "BOOT" = Print additional information.
+    :param mode: 
+        Sets the mode how the model is trained: \n
+        - [verbose]: Print additional information.
     :type mode: str
     """
     # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []
-    allMeasurements = dbAdapter.getList(1, -1, "archived")
+    allMeasurements = dbAdapter.getList(plantId, -1, "archived")
 
-    # Print feedback during boot
+    # Print feedback
     if mode == "BOOT":
         print("Training Random Forest Model...", end="\r")
 
@@ -66,7 +70,7 @@ def trainModel(dbAdapter : DBAdapterMeasurement, mode : str = None):
         pipe.fit(X_train, y_train)
         logging.info(f"Random Forest Model trained with {len(allMeasurements)} measurements.")
 
-        # Print feedback during boot
+        # Print feedback
         if mode == "BOOT":
             print(f"Finished training Random Forest Model with {len(allMeasurements)} measurements!")
 
@@ -75,11 +79,19 @@ def trainModel(dbAdapter : DBAdapterMeasurement, mode : str = None):
     else:
         logging.warning(f"Random Forest Model training skipped, no archived measurements found.")
 
-        # Print feedback during boot
+        # Print feedback
         if mode == "BOOT":
             print(f"Random Forest Model training skipped, no archived measurements found.")
 
 def evaluation(X_test : list, y_test : list):
+    """
+    Logs an evaluation of the model.
+    
+    :param X_test: X test values.
+    :type X_test: list
+    :param y_test: Y test values.
+    :type y_test: list
+    """
     # Make predictions for testing split
     y_pred = pipe.predict(X_test)
 
@@ -116,8 +128,13 @@ def predictTimeUntilDry(curMoisture : float) -> int:
     logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
     return days, hours
 
-def plot(df : pd.DataFrame):
-    """Saves the DataFrame as a PNG."""
+def plot(df: pd.DataFrame):
+    """
+    Exports the DataFrame as a PNG image.
+    
+    :param df: Dataframe to be saved.
+    :type df: DataFrame
+    """
     # Create plot from DataFrame
     plt.figure(figsize=(12, 5), dpi=250)
     plt.plot(df["minUntilDry"], df["moisture"])

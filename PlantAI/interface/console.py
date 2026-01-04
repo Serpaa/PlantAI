@@ -10,8 +10,8 @@ from sqlite3 import IntegrityError
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from core.measurements import readMoisture
-from core.models import plant, channel, species
-from core.predictions import trainModel, predictTimeUntilDry
+from core.models import plant, species
+from core.predictions import predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterMeasurement: DBAdapterMeasurement):
@@ -61,13 +61,8 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 exportEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
-        elif "model" in userInput:
-            if "train" in userInput:
-                train(dbAdapterMeasurement)
-            elif "predict" in userInput:
-                predict()
-            else:
-                unknown()
+        elif userInput == "predict":
+            predict()
         elif userInput == "weather":
             weather()
         elif userInput == "help":
@@ -433,10 +428,6 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
-def train(dbAdapter : DBAdapterMeasurement):
-    """Manually trains the model."""
-    trainModel(dbAdapter)
-
 def predict():
     """Predicts in how many minutes the plant has to be watered again."""
     # Get moisture and time until dry
@@ -465,7 +456,7 @@ def help():
     print("  show [plant,species,measure]       Show all plants, species or measurements")
     print("  channel [assign,view]              Assign, unassign or view input channels")
     print("  csv [import,export]                Imports or exports all measurements using CSV")
-    print("  model [train,predict]              Manually train the model or predict minUntilDry")
+    print("  predict                            Predicts when a plant has to be watered again.")
     print("  weather                            Show weather forecast")
     print("  help                               Show this help message")
     print("  exit,bye                           Exit")
