@@ -103,11 +103,11 @@ def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
     :rtype: int, int
     """
     try:
-        # Load pipe from persistence
+        # Load Pipeline from persistence
         pipe: Pipeline = load(f"PlantAI/resources/models/pipeline_{plantId}.joblib")
-    except FileNotFoundError:
+    except FileNotFoundError as ex:
         # Return none if Pipeline doesn't exist
-        logging.error(f"Prediction failed: Model hasn't been trained yet.")
+        logging.error(f"Prediction failed: {ex}")
         return None, None
     
     try:
