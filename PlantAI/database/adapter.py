@@ -7,7 +7,7 @@ Created: 25.09.2025
 
 from abc import ABC, abstractmethod
 from database.connector import execute, fetchall, fetchone
-from core.models import plant, species, measurement
+from core.models import plant, channel, species, measurement
 
 class DBAdapter(ABC):
     @abstractmethod
@@ -83,18 +83,36 @@ class DBAdapterPlant(DBAdapter):
             allPlants.append(plant(plantId=entry[0], speciesId=entry[1], name=entry[2], location=entry[3]))
         return allPlants
     
-    def getChannel(self) -> list:
+    def getChannel(self, mode: str = "all") -> list[channel]:
         """
-        Returns a list of all input channels with their assigned plants.
+        Returns a list of input channels with their assigned plants.
+
+        :param mode:
+            Sets the mode which channels are returned: \n
+            - [assigned]: Returns only channels which have a plant assigned.
+            - [all]: Returns all channels.
+        :type mode: str
 
         :return: List with input channels.
-        :rtype: list[]
+        :rtype: list[channel]
         """
-        query = """
-            SELECT c.channelId, c.desc, c.plantId, p.name FROM channel AS c
-            LEFT JOIN plants AS p ON c.plantId = p.plantId
+
+        # Select JOIN type
+        if mode == "all":
+            joinType = "LEFT"
+        elif mode == "assigned":
+            joinType = "RIGHT"
+
+        query = f"""
+            SELECT c.channelId, c.chMoisture, c. chTemperature, c.desc, c.plantId, p.name FROM channel AS c
+            {joinType} JOIN plants AS p ON c.plantId = p.plantId
             """
-        return fetchall(query)
+        
+        allChannels = []
+        for entry in fetchall(query):
+            allChannels.append(channel(channelId=entry[0], chMoisture=entry[1], chTemperature=entry[2], 
+                                       chDescription=entry[3], plantId=entry[4], plantName=entry[5]))
+        return allChannels
     
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants)"
@@ -211,6 +229,8 @@ class DBAdapterMeasurement(DBAdapter):
 
         :param plant: Plant the measurements belong to.
         :type plant: int
+        :param limit: Limits the amount of measurements returned (-1 = unlimited).
+        :type limit: int
         :param mode:
             Sets the mode which measurements are returned: \n
             - [archived]: Only archived measurements.

@@ -34,7 +34,7 @@ dbAdapterSpecies = DBAdapterSpecies()
 dbAdapterMeasurement = DBAdapterMeasurement()
 
 # Start new thread for reading sensor data
-threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,), daemon=True)
+threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant), daemon=True)
 threadSensor.start()
 
 # Start new thread for voice detection

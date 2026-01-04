@@ -29,14 +29,16 @@ CREATE TABLE IF NOT EXISTS plants (
 CREATE TABLE IF NOT EXISTS channel (
     channelId INTEGER PRIMARY KEY,
     plantId INTEGER,
+    chMoisture INTEGER,
+    chTemperature INTEGER,
     desc VARCHAR(40),
     FOREIGN KEY (plantId) REFERENCES plants(plantId) ON DELETE SET NULL
 );
 
 -- Add default entries for channels
-INSERT INTO channel (desc) VALUES
-('ADS1115 Channel 0-1'),
-('ADS1115 Channel 2-3');
+INSERT INTO channel (chMoisture, chTemperature, desc) VALUES
+(0, 1, 'ADS1115 Channel 0-1'),
+(2, 3, 'ADS1115 Channel 2-3');
 
 -- Create table for measurements
 CREATE TABLE IF NOT EXISTS measurements (

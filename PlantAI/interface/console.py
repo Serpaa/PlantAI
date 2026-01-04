@@ -10,7 +10,7 @@ from sqlite3 import IntegrityError
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from core.measurements import readMoisture
-from core.models import plant, species
+from core.models import plant, channel, species
 from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
 
@@ -358,13 +358,9 @@ def assignChannel(dbAdapter: DBAdapterPlant):
 
 def showChannel(dbAdapter: DBAdapterPlant):
     """Prints a description of all input channels and their assigned plants."""
-    # Get all input channels
-    for entry in dbAdapter.getChannel():
-        if entry[2] == None:
-            # don't show plant name if no plant is assigned
-            print(f"[{entry[0]}] {entry[1]} -> {entry[3]}")
-        else:
-            print(f"[{entry[0]}] {entry[1]} -> [{entry[2]}] {entry[3]}")
+    # Print all channels
+    for ch in dbAdapter.getChannel("all"):
+        print(ch.strBrief())
 
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """Imports measurements of the selected plant as CSV."""
