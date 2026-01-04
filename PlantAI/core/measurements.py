@@ -33,12 +33,30 @@ else:
     logging.warning("Sensor initialization skipped! (not running on Jetson Nano)")
 
 def readVoltage(channel: int) -> float:
-    """Returns the current voltage [V] of channel 0..3."""
+    """
+    Returns the current voltage [V] of a channel.
+    
+    :param channel: Channel to be used.
+    :type channel: int
+
+    :return: Current voltage in V.
+    :rtype: float
+    """
     # Scale raw input to voltage (0..3V)
     return ads.toVoltage(ads.readADC(channel))
 
 def readMoisture(channel: int, cycle: int) -> float:
-    """Returns the current average volumetric water content [%]."""
+    """
+    Returns the current average volumetric water content [%].
+    
+    :param channel: Channel to be used.
+    :type channel: int
+    :param cycle: Amount of times the channel is read before calculating a mean.
+    :type cycle: int
+
+    :return: Current average volumetric water content in %.
+    :rtype: float
+    """
     # Scale voltage (0..3V) to volumetric water content (0..50%)
     totalMoisture = 0.0
     for x in range(cycle): # Return average value
@@ -48,7 +66,17 @@ def readMoisture(channel: int, cycle: int) -> float:
     return round(totalMoisture / cycle, 2) # auf 2 Nachkommastellen runden
 
 def readTemperature(channel: int, cycle : int) -> float:
-    """Returns the current average temperature [°C]."""
+    """
+    Returns the current average temperature [°C].
+    
+    :param channel: Channel to be used.
+    :type channel: int
+    :param cycle: Amount of times the channel is read before calculating a mean.
+    :type cycle: int
+
+    :return: Current average temperature in °C.
+    :rtype: float
+    """
     # Scale voltage (0..3V) to temperature (-20..85°C)
     totalTemperature = 0.0
     for x in range(cycle): # Return average value
@@ -58,14 +86,31 @@ def readTemperature(channel: int, cycle : int) -> float:
     return round(totalTemperature / cycle, 2) # auf 2 Nachkommastellen runden
 
 def watered(old : float, new : float) -> bool:
-    """Returns true if moisture increased significantly between old and new measurement."""
+    """
+    Checks if a plant has been watered recently by comparing moisture.
+
+    :param old: Last moisture measurement.
+    :type old: float
+    :param new: Current moisture measurement.
+    :type new: float
+
+    :return: Returns true if moisture increased significantly.
+    :rtype: bool
+    """
     if new - old > THRESHOLD:
         return True
     else:
         return False
 
 def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant):
-    """Saves the current moisture and temperature measurements every x minutes."""
+    """
+    Saves the current moisture and temperature measurements of all assigned channels every x minutes.
+    
+    :param dbAdapterMeasurement: Database adapter to access the measurements.
+    :type dbAdapterMeasurement: DBAdapterMeasurement
+    :param dbAdapterPlant: Database adapter to access the plants.
+    :type dbAdapterPlant: DBAdapterPlant
+    """
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
         while True:
@@ -114,7 +159,16 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                     print(f"Channel [{ch.channelId}] - Moisture: {moistureV:.2f}V = {moisture}%, Temperature: {temperatureV:.2f}V = {temperature}°C")
 
 def setMinutesUntilDry(plantId: int, dbAdapter: DBAdapterMeasurement, recentMeasurement : measurement):
-    """Set Minutes until Dry for all non-archived measurements."""
+    """
+    Set Minutes until Dry for all non-archived measurements of a plant.
+    
+    :param plantId: PlantID for which the Minutes until Dry are set.
+    :type plantId: int
+    :param dbAdapter: Database adapter to access the measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param recentMeasurement: The most recent measurement.
+    :type recentMeasurement: measurement
+    """
     # Format recent timestamp
     recentTime = datetime.strptime(recentMeasurement.timestamp, FORMAT)
 
