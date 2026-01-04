@@ -62,7 +62,7 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
             else:
                 unknown()
         elif userInput == "predict":
-            predict()
+            predict(dbAdapterPlant)
         elif userInput == "weather":
             weather()
         elif userInput == "help":
@@ -428,17 +428,32 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
-def predict():
-    """Predicts in how many minutes the plant has to be watered again."""
-    # Get moisture and time until dry
-    curMoisture = readMoisture(1)
-    days, hours = predictTimeUntilDry(curMoisture)
+def predict(dbAdapter: DBAdapterPlant):
+    """Predicts in how many minutes the plants have to be watered."""
+    summary = ""
+    for i, ch in enumerate(dbAdapter.getChannel("assigned")):
+        try:
+            # Get moisture and time until dry
+            curMoisture = readMoisture(ch.chMoisture, 1)
+            days, hours = predictTimeUntilDry(ch.plantId, curMoisture)
+        except NameError:
+            print("Prediction failed: Can't read current moisture, ADS1115 not initialized.")
+            logging.error("Prediction failed: Can't read current moisture, ADS1115 not initialized.")
+            break
 
-    # Only print answer if prediction was made
-    if days == None and hours == None:
-        print("Not enough data collected to predict the moisture.")
-    else:
-        print(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
+        if i > 0:
+            # Add line break if multiple channels are read
+            summary += "\n"
+
+        if days == None and hours == None:
+            # No prediction possible
+            summary += f"[{ch.plantId}] {ch.plantName}: Not enough data collected to predict the moisture."
+        else:
+            summary += f"[{ch.plantId}] {ch.plantName}: {curMoisture}%: Water in {days} days and {hours} hours."
+    
+    # Print summary of all plants
+    if summary != "":
+        print(summary)
 
 def weather():
     """Prints a weather forecast of the current location."""
@@ -456,7 +471,7 @@ def help():
     print("  show [plant,species,measure]       Show all plants, species or measurements")
     print("  channel [assign,view]              Assign, unassign or view input channels")
     print("  csv [import,export]                Imports or exports all measurements using CSV")
-    print("  predict                            Predicts when a plant has to be watered again.")
+    print("  predict                            Predicts when plants have to be watered")
     print("  weather                            Show weather forecast")
     print("  help                               Show this help message")
     print("  exit,bye                           Exit")
