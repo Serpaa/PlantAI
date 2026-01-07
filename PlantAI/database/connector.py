@@ -59,11 +59,7 @@ def fetchone(query: str, values: tuple = ()):
     # Return result
     result = cur.fetchone()
     cur.close()
-
-    if result is None:
-        return None
-    else:
-        return result[0]
+    return result
 
 def fetchall(query: str, values: tuple = ()):
     """Executes an SQL query and returns a list."""

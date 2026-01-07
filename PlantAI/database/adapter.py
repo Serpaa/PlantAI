@@ -116,12 +116,14 @@ class DBAdapterPlant(DBAdapter):
     
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants)"
-        return fetchone(query,)
+        result = fetchone(query,)
+        return result[0]
 
     def existsId(self, id: int) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants WHERE plantId = ?)"
         values = (id,)
-        return fetchone(query, values)
+        result = fetchone(query, values)
+        return result[0]
 
     def insert(self, data: plant):
         query = "INSERT INTO plants (speciesId, name, location) VALUES (?, ?, ?)"
@@ -163,12 +165,14 @@ class DBAdapterSpecies(DBAdapter):
     
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM species)"
-        return fetchone(query,)
+        result = fetchone(query,)
+        return result[0]
     
     def existsId(self, id: int) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM species WHERE speciesId = ?)"
         values = (id,)
-        return fetchone(query, values)
+        result = fetchone(query, values)
+        return result[0]
 
     def insert(self, data: species):
         query = "INSERT INTO species (name, minMoisture) VALUES (?, ?)"
@@ -270,12 +274,14 @@ class DBAdapterMeasurement(DBAdapter):
     
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM measurements)"
-        return fetchone(query,)
+        result = fetchone(query,)
+        return result[0]
     
     def existsId(self, id: int):
         query = "SELECT EXISTS (SELECT 1 FROM measurements WHERE measureId = ?)"
         values = (id,)
-        return fetchone(query, values)
+        result = fetchone(query, values)
+        return result[0]
 
     def insert(self, data: measurement):
         query = "INSERT INTO measurements (plantId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
