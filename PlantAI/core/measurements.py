@@ -121,42 +121,49 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                 time.sleep(2)
 
             # Get all assigned input channels
-            for ch in dbAdapterPlant.getChannel("assigned"):
-                # Check if reading mode is interval or debug
-                if MODE == "interval":
-                    # Check if recent measurement exists
-                    skipInsert = False
-                    recentMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
-                    if recentMeasurement is None:
-                        logging.info("No recent measurement found. Watering check skipped.")
-                        
-                    # Check if plant got watered since last measurement
-                    elif watered(recentMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
-                        # Set minutes until dry for all previous measurements
-                        logging.info("Watering detected.")
-                        setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, recentMeasurement)
+            channels = dbAdapterPlant.getChannel("assigned")
 
-                        # Train model using the now archived measurements
-                        trainModel(ch.plantId, dbAdapterMeasurement)
-                        skipInsert = True
+            if channels == None:
+                # Skip saving measurements if no plants are assigned
+                logging.info("No plants assigned to any channels. Saving measurement skipped.")
+            else:
+                # Save measurement for each assigned channel
+                for ch in channels:
+                    # Check if reading mode is interval or debug
+                    if MODE == "interval":
+                        # Check if recent measurement exists
+                        skipInsert = False
+                        recentMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
+                        if recentMeasurement is None:
+                            logging.info("No recent measurement found. Watering check skipped.")
+                            
+                        # Check if plant got watered since last measurement
+                        elif watered(recentMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
+                            # Set minutes until dry for all previous measurements
+                            logging.info("Watering detected.")
+                            setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, recentMeasurement)
 
-                    # Skip insert after minutes until dry were set
-                    if not skipInsert:
-                        # Format timestamp
-                        now = datetime.now()
-                        timestamp = now.strftime(FORMAT)
+                            # Train model using the now archived measurements
+                            trainModel(ch.plantId, dbAdapterMeasurement)
+                            skipInsert = True
 
-                        # Read moisture and temperature from SMT50 (-1 = non-archived entry)
-                        moisture = readMoisture(ch.chMoisture, 5)
-                        temperature = readTemperature(ch.chTemperature, 5)
-                        dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, -1, timestamp))
-                elif MODE == "debug":
-                    # Print data directly
-                    moistureV = readVoltage(ch.chMoisture)
-                    moisture = readMoisture(ch.chMoisture, 1)
-                    temperatureV = readVoltage(ch.chTemperature)
-                    temperature = readTemperature(ch.chTemperature, 1)
-                    print(f"Channel [{ch.channelId}] - Moisture: {moistureV:.2f}V = {moisture}%, Temperature: {temperatureV:.2f}V = {temperature}°C")
+                        # Skip insert after minutes until dry were set
+                        if not skipInsert:
+                            # Format timestamp
+                            now = datetime.now()
+                            timestamp = now.strftime(FORMAT)
+
+                            # Read moisture and temperature from SMT50 (-1 = non-archived entry)
+                            moisture = readMoisture(ch.chMoisture, 5)
+                            temperature = readTemperature(ch.chTemperature, 5)
+                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, -1, timestamp))
+                    elif MODE == "debug":
+                        # Print data directly
+                        moistureV = readVoltage(ch.chMoisture)
+                        moisture = readMoisture(ch.chMoisture, 1)
+                        temperatureV = readVoltage(ch.chTemperature)
+                        temperature = readTemperature(ch.chTemperature, 1)
+                        print(f"Channel [{ch.channelId}] - Moisture: {moistureV:.2f}V = {moisture}%, Temperature: {temperatureV:.2f}V = {temperature}°C")
 
 def setMinutesUntilDry(plantId: int, dbAdapter: DBAdapterMeasurement, recentMeasurement : measurement):
     """
