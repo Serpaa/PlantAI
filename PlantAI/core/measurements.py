@@ -123,7 +123,7 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
             # Get all assigned input channels
             channels = dbAdapterPlant.getChannel("assigned")
 
-            if channels == None:
+            if channels is None:
                 # Skip saving measurements if no plants are assigned
                 logging.info("No plants assigned to any channels. Saving measurement skipped.")
             else:
