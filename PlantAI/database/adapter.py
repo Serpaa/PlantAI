@@ -97,15 +97,15 @@ class DBAdapterPlant(DBAdapter):
         :rtype: list[channel]
         """
 
-        # Select JOIN type
-        if mode == "all":
-            joinType = "LEFT"
-        elif mode == "assigned":
-            joinType = "RIGHT"
+        where = ""
+        if mode == "assigned":
+            # Override WHERE for returning assigned channels
+            where = "WHERE p.plantId IS NOT NULL"
 
         query = f"""
-            SELECT c.channelId, c.chMoisture, c. chTemperature, c.desc, c.plantId, p.name FROM channel AS c
-            {joinType} JOIN plants AS p ON c.plantId = p.plantId
+            SELECT c.channelId, c.chMoisture, c.chTemperature, c.desc, c.plantId, p.name FROM channel AS c
+            LEFT JOIN plants AS p ON c.plantId = p.plantId
+            {where}
             """
         
         allChannels = []
