@@ -2,7 +2,7 @@ core:
   measurements:
     readMode: interval
     readIntervalSensors: 900
-    wateredThreshold: 20
+    wateredThreshold: 5
 
 interface:
   vad:

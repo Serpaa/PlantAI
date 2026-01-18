@@ -33,11 +33,16 @@ def question(prompt: str, data) -> str:
     else:
         userContent = f"'{prompt}' using additional information: '{data}'"
 
-    # Send message to model
-    response: ChatResponse = chat(model='llama3.2:1b', messages=[
-        {'role': 'system', 'content': sysContent},
-        {'role': 'user', 'content': userContent}
-    ])
+    try:
+        # Send message to model
+        response: ChatResponse = chat(model='llama3.2:3b', messages=[
+            {'role': 'system', 'content': sysContent},
+            {'role': 'user', 'content': userContent}
+        ])
+    except ConnectionError as ex:
+        # Catch error if Ollama model is offline
+        logging.error(ex)
+        return "I apologize, Ollama isn't running so I can't answer your question."
 
     # Some logging
     logging.info(f"Prompt: {userContent}")

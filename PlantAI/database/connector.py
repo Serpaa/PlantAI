@@ -8,13 +8,26 @@ Created: 25.09.2025
 import logging, sqlite3
 
 def connect():
-    """Connect to the SQLite Database."""
+    """
+    Connect to the SQLite Database.
+    
+    :return: Active connection and cursor.
+    :rtype: tuple[Connection, Cursor]
+    """
     path = "PlantAI/database/PlantAI.db"
     con = sqlite3.connect(path)
+    
+    # Enforce foreign keys for connection
+    con.execute("PRAGMA foreign_keys = ON")
     return con, con.cursor()
 
 def createDB(path: str):
-    """Creates a new SQLite Database."""
+    """
+    Creates a new SQLite Database.
+    
+    :param path: Filepath where the database is created.
+    :type path: str
+    """
     # Read SQL file
     file = open(path, "r")
     sqlFile = file.read()
@@ -28,6 +41,7 @@ def createDB(path: str):
     for command in sqlCommands:
         try:
             cur.execute(command)
+            con.commit()
         except sqlite3.OperationalError as msg:
             print("Command skipped: ", msg)
     cur.close()
@@ -36,7 +50,14 @@ def createDB(path: str):
     logging.info("New database created.")
 
 def execute(query: str, values: tuple = ()):
-    """Executes an SQL query without returning a value."""
+    """
+    Executes an SQL query without returning a value.
+    
+    :param query: Query to be executed.
+    :type query: str
+    :param values: Values of the query.
+    :type values: tuple()
+    """
     con, cur = connect()
     cur.execute(query, values)
     con.commit()
@@ -44,11 +65,21 @@ def execute(query: str, values: tuple = ()):
     # Raise exception if no rows were affected
     if cur.rowcount == 0:
         cur.close()
-        raise Exception("No matching entry found.")
+        raise ValueError("No matching entry found.")
     cur.close()
 
 def fetchone(query: str, values: tuple = ()):
-    """Executes an SQL query and returns one entry."""
+    """
+    Executes an SQL query and returns one entry.
+    
+    :param query: Query to be executed.
+    :type query: str
+    :param values: Values of the query.
+    :type values: tuple()
+
+    :return: One entry fetched from the query.
+    :rtype: Any
+    """
     con, cur = connect()
     cur.execute(query, values)
     
@@ -58,7 +89,17 @@ def fetchone(query: str, values: tuple = ()):
     return result
 
 def fetchall(query: str, values: tuple = ()):
-    """Executes an SQL query and returns a list."""
+    """
+    Executes an SQL query and returns a list.
+    
+    :param query: Query to be executed.
+    :type query: str
+    :param values: Values of the query.
+    :type values: tuple()
+
+    :return: List of entries fetched from the query.
+    :rtype: list[Any]
+    """
     con, cur = connect()
     cur.execute(query, values)
     
