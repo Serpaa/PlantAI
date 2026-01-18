@@ -85,7 +85,7 @@ def readTemperature(channel: int, cycle : int) -> float:
         time.sleep(1)
     return round(totalTemperature / cycle, 2) # auf 2 Nachkommastellen runden
 
-def watered(old: float, new: float) -> bool:
+def checkWatered(old: float, new: float) -> bool:
     """
     Checks if a plant has been watered recently by comparing moisture.
 
@@ -102,7 +102,7 @@ def watered(old: float, new: float) -> bool:
     else:
         return False
     
-def dry(lastMeasurement: measurement, dbAdapterPlant: DBAdapterPlant) -> bool:
+def checkDry(lastMeasurement: measurement, dbAdapterPlant: DBAdapterPlant) -> bool:
     """
     Checks if a plant turned dry by comparing moisture.
 
@@ -162,12 +162,12 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                             logging.info("No recent measurement found. All checks skipped.")
                             
                         # Check if plant got watered since last measurement
-                        elif watered(lastMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
+                        elif checkWatered(lastMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
                             logging.info("Watering detected.")
                             watered = True
 
                         # Check if plant dropped below minMoisture
-                        elif dry(lastMeasurement, dbAdapterPlant):
+                        elif checkDry(lastMeasurement, dbAdapterPlant):
                             logging.info("Plant turning dry detected.")
                             dry = True
 
