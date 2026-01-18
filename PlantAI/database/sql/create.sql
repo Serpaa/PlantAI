@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS species (
 
 -- Add default entries for species
 INSERT INTO species (name, minMoisture) VALUES
-('Schefflera', 20.0);
+('Schefflera', 20.0),
+('Azalee', 18.0);
 
 -- Create table for plants
 CREATE TABLE IF NOT EXISTS plants (
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS measurements (
     moisture FLOAT,
     temperature FLOAT,
     minUntilDry INTEGER,
+    isDry INTEGER,
     timestamp VARCHAR(15),
     FOREIGN KEY (plantId) REFERENCES plants(plantId)
 );

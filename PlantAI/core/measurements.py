@@ -85,7 +85,7 @@ def readTemperature(channel: int, cycle : int) -> float:
         time.sleep(1)
     return round(totalTemperature / cycle, 2) # auf 2 Nachkommastellen runden
 
-def watered(old : float, new : float) -> bool:
+def watered(old: float, new: float) -> bool:
     """
     Checks if a plant has been watered recently by comparing moisture.
 
@@ -98,6 +98,30 @@ def watered(old : float, new : float) -> bool:
     :rtype: bool
     """
     if new - old > THRESHOLD:
+        return True
+    else:
+        return False
+    
+def dry(lastMeasurement: measurement, dbAdapterPlant: DBAdapterPlant) -> bool:
+    """
+    Checks if a plant turned dry by comparing moisture.
+
+    :param lastMeasurement: Last moisture measurement.
+    :type lastMeasurement: measurement
+    :param dbAdapterPlant: Database adapter to access the measurements.
+    :type dbAdapterPlant: DBAdapterPlant
+
+    :return: Returns true if plant just turned dry.
+    :rtype: bool
+    """
+    minMoisture = dbAdapterPlant.getMinMoisture(lastMeasurement.plantId)
+
+    # Measurement is already flagged as dry
+    if lastMeasurement.isDry == 1:
+        return False
+    
+    # Compare moisture against minimum Moisture
+    elif lastMeasurement.moisture <= minMoisture:
         return True
     else:
         return False
@@ -132,31 +156,48 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                     # Check if reading mode is interval or debug
                     if MODE == "interval":
                         # Check if recent measurement exists
-                        skipInsert = False
-                        recentMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
-                        if recentMeasurement is None:
-                            logging.info("No recent measurement found. Watering check skipped.")
+                        watered = False; dry = False
+                        lastMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
+                        if lastMeasurement is None:
+                            logging.info("No recent measurement found. All checks skipped.")
                             
                         # Check if plant got watered since last measurement
-                        elif watered(recentMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
-                            # Set minutes until dry for all previous measurements
+                        elif watered(lastMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
                             logging.info("Watering detected.")
-                            setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, recentMeasurement)
+                            watered = True
+
+                        # Check if plant dropped below minMoisture
+                        elif dry(lastMeasurement, dbAdapterPlant):
+                            logging.info("Plant turning dry detected.")
+                            dry = True
+
+                        # Set minutes until dry for all previous measurements
+                        if watered or dry:
+                            setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, lastMeasurement)
 
                             # Train model using the now archived measurements
                             trainModel(ch.plantId, dbAdapterMeasurement)
-                            skipInsert = True
 
-                        # Skip insert after minutes until dry were set
-                        if not skipInsert:
+                        # Skip insert after the plant was watered
+                        # creates a little buffer while water spreads through the soil
+                        if not watered:
                             # Format timestamp
                             now = datetime.now()
                             timestamp = now.strftime(FORMAT)
 
+                            isDry = 0
+                            # Plant has just been watered
+                            if lastMeasurement is None:
+                                isDry = 0
+
+                            # Plant just turned dry or is already dry
+                            elif dry or lastMeasurement.isDry:
+                                isDry = 1
+
                             # Read moisture and temperature from SMT50 (-1 = non-archived entry)
                             moisture = readMoisture(ch.chMoisture, 5)
                             temperature = readTemperature(ch.chTemperature, 5)
-                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, -1, timestamp))
+                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, -1, isDry, timestamp))
                     elif MODE == "debug":
                         # Print data directly
                         moistureV = readVoltage(ch.chMoisture)
