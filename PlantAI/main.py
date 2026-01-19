@@ -5,7 +5,7 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
-import os, logging, threading
+import os, sys, logging, threading
 
 # Create archive and model folders
 folders = ["PlantAI/resources/archive", "PlantAI/resources/models"]
@@ -34,12 +34,16 @@ dbAdapterPlant = DBAdapterPlant()
 dbAdapterSpecies = DBAdapterSpecies()
 dbAdapterMeasurement = DBAdapterMeasurement()
 
+# Set threading event used for terminating safely
+threadRun = threading.Event()
+threadRun.set()
+
 # Start new thread for reading sensor data
-threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant), daemon=True)
+threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant,threadRun))
 threadSensor.start()
 
 # Start new thread for voice detection
-threadVAD = threading.Thread(target=vad, daemon=True)
+threadVAD = threading.Thread(target=vad, args=(threadRun,))
 threadVAD.start()
 
 # Logs
@@ -47,3 +51,11 @@ logging.info("System booted.")
 
 # Initialize Console
 mainMenu(dbAdapterPlant, dbAdapterSpecies, dbAdapterMeasurement)
+
+# Wait on threads to terminate ...
+threadRun.clear()
+threadSensor.join()
+threadVAD.join()
+
+# Exit
+sys.exit()

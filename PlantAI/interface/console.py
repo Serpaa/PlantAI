@@ -5,7 +5,7 @@ Author: Tim Grundey
 Created: 30.09.2025
 """
 
-import logging, sys
+import logging
 from sqlite3 import IntegrityError
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
@@ -69,6 +69,7 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
             help()
         elif userInput == "exit" or userInput == "bye":
             bye()
+            break
         else:
             unknown()
 
@@ -484,4 +485,3 @@ def bye():
     """Exits the system."""
     print("Goodbye!")
     logging.info("System shutdown.")
-    sys.exit() 

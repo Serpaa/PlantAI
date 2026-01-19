@@ -5,7 +5,7 @@ Author: Tim Grundey
 Created: 10.10.2025
 """
 
-import logging, time, platform
+import logging, time, platform, threading
 from datetime import datetime
 from core.models import measurement
 from core.predictions import trainModel
@@ -126,7 +126,7 @@ def checkDry(lastMeasurement: measurement, dbAdapterPlant: DBAdapterPlant) -> bo
     else:
         return False
 
-def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant):
+def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant, threadRun: threading.Event):
     """
     Saves the current moisture and temperature measurements of all assigned channels every x minutes.
     
@@ -134,10 +134,12 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
     :type dbAdapterMeasurement: DBAdapterMeasurement
     :param dbAdapterPlant: Database adapter to access the plants.
     :type dbAdapterPlant: DBAdapterPlant
+    :param threadRun: Thread is running while this flag is true.
+    :type threadRun: threading.Event
     """
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
-        while True:
+        while threadRun.is_set():
             # Wait until reading depening on mode
             if MODE == "interval":
                 time.sleep(SLEEP)
