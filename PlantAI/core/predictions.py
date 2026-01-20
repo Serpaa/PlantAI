@@ -16,6 +16,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
 from database.adapter import DBAdapterMeasurement
+from system.streams import importConfigFromYAML
+
+# Configuration
+stream = importConfigFromYAML()
+config = stream["core"]["predictions"]
+
+# Constants
+SCATTER = config["createScatter"]
 
 def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
     """
@@ -48,7 +56,8 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
         y = df['minUntilDry']
 
         # Save DataFrame as png
-        plot(df)
+        if (SCATTER):
+            plot(df)
 
         # Split training and test data (80/20)
         # random_state makes sure the data is always mixed the same way (only for testing)
@@ -135,9 +144,9 @@ def plot(df: pd.DataFrame):
     :param df: Dataframe to be saved.
     :type df: DataFrame
     """
-    # Create plot from DataFrame
+    # Create scatter plot from DataFrame
     plt.figure(figsize=(12, 5), dpi=250)
-    plt.plot(df["minUntilDry"], df["moisture"])
+    plt.scatter(df["minUntilDry"], df["moisture"], s=10)
     plt.xlabel("Minutes until Dry")
     plt.ylabel("Moisture")
     plt.title("Measurements")

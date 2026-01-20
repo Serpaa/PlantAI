@@ -3,6 +3,8 @@ core:
     readMode: interval
     readIntervalSensors: 900
     wateredThreshold: 2
+  predictions:
+    createScatter: false
 
 interface:
   vad:
