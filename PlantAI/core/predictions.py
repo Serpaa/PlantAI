@@ -48,7 +48,7 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
         y = df['minUntilDry']
 
         # Save DataFrame as png
-        # plot(df)
+        plot(df)
 
         # Split training and test data (80/20)
         # random_state makes sure the data is always mixed the same way (only for testing)
