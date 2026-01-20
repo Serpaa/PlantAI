@@ -67,8 +67,8 @@ def vad(threadStop: threading.Event):
     """
     Records audio and checks for voice activity.
 
-    :param threadRun: Thread is running while this flag is true.
-    :type threadRun: threading.Event
+    :param threadStop: Shutdown the thread with Event.set()
+    :type threadStop: threading.Event
     """
     speechDetected = False; lastSpeech = 0
     wakewordDetected = False; lastWakeword = 0

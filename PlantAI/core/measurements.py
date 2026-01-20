@@ -134,8 +134,8 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
     :type dbAdapterMeasurement: DBAdapterMeasurement
     :param dbAdapterPlant: Database adapter to access the plants.
     :type dbAdapterPlant: DBAdapterPlant
-    :param threadRun: Thread is running while this flag is true.
-    :type threadRun: threading.Event
+    :param threadStop: Shutdown the thread with Event.set()
+    :type threadStop: threading.Event
     """
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
