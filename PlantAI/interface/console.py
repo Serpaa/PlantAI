@@ -11,7 +11,7 @@ from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from core.measurements import readMoisture
 from core.models import plant, species
-from core.predictions import predictTimeUntilDry
+from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterMeasurement: DBAdapterMeasurement):
@@ -61,8 +61,13 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 exportEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
-        elif userInput == "predict":
-            predict(dbAdapterPlant)
+        elif "model" in userInput:
+            if "predict" in userInput:
+                predict(dbAdapterPlant)
+            elif "train" in userInput:
+                train(dbAdapterMeasurement, dbAdapterPlant)
+            else:
+                unknown()
         elif userInput == "weather":
             weather()
         elif userInput == "help":
@@ -412,7 +417,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
                 print("Please enter a number.")
                 continue
 
-            # Check if selected species exists
+            # Check if selected plant exists
             if showAdapter.existsId(userInputId) == 1:
                 break
             else:
@@ -456,6 +461,35 @@ def predict(dbAdapter: DBAdapterPlant):
     if summary != "":
         print(summary)
 
+def train(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapterPlant):
+    """Manually train the model of a plant."""
+    print("Choose a plant (ID) to train the model for:")
+    if showAdapter.exists() == 1:
+        showEntryBrief(showAdapter)
+
+        while True:
+            # Loop in case the input is invalid
+            userInputId = input("(train) >>> ")
+
+            try:
+                # Convert input to int
+                userInputId = int(userInputId)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Check if selected plant exists
+            if showAdapter.existsId(userInputId) == 1:
+                break
+            else:
+                print("Selected plant doesn't exist. Please try again.")
+    else:
+        print("No plant available to select, please add one first.")
+        return
+    
+    # Train model of plant
+    trainModel(userInputId, dbAdapter)
+
 def weather():
     """Prints a weather forecast of the current location."""
     try:
@@ -472,7 +506,7 @@ def help():
     print("  show [plant,species,measure]       Show all plants, species or measurements")
     print("  channel [assign,view]              Assign, unassign or view input channels")
     print("  csv [import,export]                Imports or exports all measurements using CSV")
-    print("  predict                            Predicts when plants have to be watered")
+    print("  model [predict,train]              Manually train model or predict moisture")
     print("  weather                            Show weather forecast")
     print("  help                               Show this help message")
     print("  exit,bye                           Exit")
