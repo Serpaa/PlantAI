@@ -63,7 +63,7 @@ os.chdir(cwd)
 model_tts.to(DEVICE_TTS)
 model_stt.to(DEVICE_STT)
 
-def vad(threadRun: threading.Event):
+def vad(threadStop: threading.Event):
     """
     Records audio and checks for voice activity.
 
@@ -98,7 +98,7 @@ def vad(threadRun: threading.Event):
         output=True,
         frames_per_buffer=CHUNK)
         
-    while threadRun.is_set():
+    while not threadStop.is_set():
         # Seperate audio into chunks
         audioChunk = stream.read(num_frames=SAMPLE_RATE, exception_on_overflow=False)
 

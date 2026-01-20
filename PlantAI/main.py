@@ -34,16 +34,15 @@ dbAdapterPlant = DBAdapterPlant()
 dbAdapterSpecies = DBAdapterSpecies()
 dbAdapterMeasurement = DBAdapterMeasurement()
 
-# Set threading event used for terminating safely
-threadRun = threading.Event()
-threadRun.set()
+# Threading event used for terminating safely
+threadStop = threading.Event()
 
 # Start new thread for reading sensor data
-threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant,threadRun))
+threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant,threadStop))
 threadSensor.start()
 
 # Start new thread for voice detection
-threadVAD = threading.Thread(target=vad, args=(threadRun,))
+threadVAD = threading.Thread(target=vad, args=(threadStop,))
 threadVAD.start()
 
 # Logs
@@ -52,8 +51,8 @@ logging.info("System booted.")
 # Initialize Console
 mainMenu(dbAdapterPlant, dbAdapterSpecies, dbAdapterMeasurement)
 
-# Wait on threads to terminate ...
-threadRun.clear()
+# Stop threads and wait for them to terminate ...
+threadStop.set()
 threadSensor.join()
 threadVAD.join()
 

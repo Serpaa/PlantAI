@@ -126,7 +126,7 @@ def checkDry(lastMeasurement: measurement, dbAdapterPlant: DBAdapterPlant) -> bo
     else:
         return False
 
-def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant, threadRun: threading.Event):
+def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant, threadStop: threading.Event):
     """
     Saves the current moisture and temperature measurements of all assigned channels every x minutes.
     
@@ -139,12 +139,20 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
     """
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
-        while threadRun.is_set():
-            # Wait until reading depening on mode
-            if MODE == "interval":
-                time.sleep(SLEEP)
-            elif MODE == "debug":
-                time.sleep(2)
+
+        # Set timout length depening on mode
+        if MODE == "interval":
+            sleep = SLEEP
+        elif MODE == "debug":
+            sleep = 2
+
+        while not threadStop.is_set():
+            # Wait interval time
+            threadStop.wait(timeout=sleep)
+
+            # Exit function early during shutdown
+            if threadStop.is_set():
+                break
 
             # Get all assigned input channels
             channels = dbAdapterPlant.getChannel("assigned")
