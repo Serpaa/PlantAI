@@ -15,7 +15,16 @@ from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterMeasurement: DBAdapterMeasurement):
-    """Main Menu of the console interface."""
+    """
+    Main menu of the console interface, loops the main thread.
+    
+    :param dbAdapterPlant: Database adapter to access the plants.
+    :type dbAdapterPlant: DBAdapterPlant
+    :param dbAdapterSpecies: Database adapter to access the species.
+    :type dbAdapterSpecies: DBAdapterSpecies
+    :param dbAdapterMeasurement: Database adapter to access the measurements.
+    :type dbAdapterMeasurement: DBAdapterMeasurement
+    """
     print("Welcome to PlantAI!")
     while True:
         # Wait for user input
@@ -79,7 +88,14 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
             unknown()
 
 def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
-    """Add a new entry to the database."""
+    """
+    Add a new plant or species to the database.
+    
+    :param dbAdapter: Database adapter to access the plants or species.
+    :type dbAdapter: DBAdapter
+    :param showAdapter: Database adapter to show species.
+    :type showAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a name:")
 
@@ -187,7 +203,14 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     dbAdapter.insert(data)
 
 def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
-    """Deletes the selected entry from the database."""
+    """
+    Deletes the plant, species or measurement from the database.
+    
+    :param dbAdapter: Database adapter to access plants, species or measurements.
+    :type dbAdapter: DBAdapter
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant):
         # Check if any plants exist
         if dbAdapter.exists() == 1:
@@ -244,7 +267,14 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("No matching measurements found. Returning to menu ...")
 
 def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
-    """Prints all entries from a specific table."""
+    """
+    Prints all plants, species or measurements.
+    
+    :param dbAdapter: Database adapter to access plants, species or measurements.
+    :type dbAdapter: DBAdapter
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant):
         # Check if any plants exist
         if dbAdapter.exists() == 1:
@@ -290,7 +320,12 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
         print(object.strDetail())
 
 def showEntryBrief(dbAdapter: DBAdapter):
-    """Prints a brief description from a specific table."""
+    """
+    Prints a brief overview of available plants or species.
+    
+    :param dbAdapter: Database adapter to access plants or species.
+    :type dbAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
         result = dbAdapter.getList()
 
@@ -299,7 +334,12 @@ def showEntryBrief(dbAdapter: DBAdapter):
             print(object.strBrief())
 
 def assignChannel(dbAdapter: DBAdapterPlant):
-    """Assign an input channel to a plant."""
+    """
+    Assign an input channel to a plant.
+    
+    :param dbAdapter: Database adapter to access plants.
+    :type dbAdapter: DBAdapterPlant
+    """
     # Check if any plants exist
     print("Choose a plant (ID):")
     print("[0] * None * ")
@@ -358,13 +398,25 @@ def assignChannel(dbAdapter: DBAdapterPlant):
         print(f"Plant {userInputPlant} assigned to channel {userInputChannel}!")
 
 def showChannel(dbAdapter: DBAdapterPlant):
-    """Prints a description of all input channels and their assigned plants."""
+    """
+    Prints a description of all input channels and their assigned plants.
+    
+    :param dbAdapter: Database adapter to access plants.
+    :type dbAdapter: DBAdapterPlant
+    """
     # Print all channels
     for ch in dbAdapter.getChannel("all"):
         print(ch.strBrief())
 
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
-    """Imports measurements of the selected plant as CSV."""
+    """
+    Imports measurements of the selected plant as CSV.
+    
+    :param dbAdapter: Database adapter to access measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     # Check if any plants exist
     print("Choose a plant (ID) to import the measurements for:")
     if showAdapter.exists() == 1:
@@ -401,7 +453,14 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
         logging.error(f"Import failed! No such file: {path}")
 
 def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
-    """Exports measurements of the selected plant as CSV."""
+    """
+    Exports measurements of the selected plant as CSV.
+    
+    :param dbAdapter: Database adapter to access measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     print("Choose a plant (ID) to export the measurements for:")
     if showAdapter.exists() == 1:
         showEntryBrief(showAdapter)
@@ -435,7 +494,12 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     print("Export successful!")
 
 def predict(dbAdapter: DBAdapterPlant):
-    """Predicts in how many minutes the plants have to be watered."""
+    """
+    Predicts in how many minutes the plants have to be watered.
+    
+    :param dbAdapter: Database adapter to access plants.
+    :type dbAdapter: DBAdapterPlant
+    """
     summary = ""
     for i, ch in enumerate(dbAdapter.getChannel("assigned")):
         try:
@@ -462,7 +526,14 @@ def predict(dbAdapter: DBAdapterPlant):
         print(summary)
 
 def train(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapterPlant):
-    """Manually train the model of a plant."""
+    """
+    Manually train the model of a plant.
+    
+    :param dbAdapter: Database adapter to access measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapterPlant
+    """
     print("Choose a plant (ID) to train the model for:")
     if showAdapter.exists() == 1:
         showEntryBrief(showAdapter)
