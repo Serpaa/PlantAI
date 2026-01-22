@@ -190,14 +190,14 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
 
                         # Skip insert after the plant was watered
                         # creates a little buffer while water spreads through the soil
-                        if not watered:
+                        if not watered or lastMeasurement.isDry:
                             # Format timestamp
                             now = datetime.now()
                             timestamp = now.strftime(FORMAT)
 
                             isDry = 0
-                            # Plant has just been watered
-                            if lastMeasurement is None:
+                            # Plant turned from dry to watered
+                            if watered:
                                 isDry = 0
 
                             # Plant just turned dry or is already dry
