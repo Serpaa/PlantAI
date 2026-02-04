@@ -7,12 +7,18 @@ Created: 30.09.2025
 
 import logging
 from sqlite3 import IntegrityError
+from rich import box
+from rich.console import Console
+from rich.table import Table
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from core.measurements import readMoisture
 from core.models import plant, species
 from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
+
+# Setup rich console
+console = Console()
 
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterMeasurement: DBAdapterMeasurement):
     """
@@ -25,7 +31,7 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
     :param dbAdapterMeasurement: Database adapter to access the measurements.
     :type dbAdapterMeasurement: DBAdapterMeasurement
     """
-    print("Welcome to PlantAI!")
+    console.print("Welcome to [bold]PlantAI[/bold]!")
     while True:
         # Wait for user input
         userInput = input("(main) >>> ")
@@ -275,11 +281,22 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     :param showAdapter: Database adapter to show plants.
     :type showAdapter: DBAdapter
     """
+    # Setup table
+    table = Table(box=box.MINIMAL)
+    
     if isinstance(dbAdapter, DBAdapterPlant):
         # Check if any plants exist
         if dbAdapter.exists() == 1:
-            print("[ID]:[SpeciesID] Name -> Location")
-            print("---------------------------------")
+            # Setup columns
+            table.add_column("ID")
+            table.add_column("SpeciesID")
+            table.add_column("Name")
+            table.add_column("Location")
+
+            # Add row for each plant
+            for plt in dbAdapter.getList():
+                table.add_row(str(plt.plantId), str(plt.speciesId), plt.name, plt.location)
+            console.print(table)
         else:
             print("No plants available to show, please add one first.")
             return
@@ -287,8 +304,15 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     elif isinstance(dbAdapter, DBAdapterSpecies):
         # Check if any species exist
         if dbAdapter.exists() == 1:
-            print("[ID] Name -> min. Moisture")
-            print("--------------------------")
+            # Setup columns
+            table.add_column("ID")
+            table.add_column("Name")
+            table.add_column("min. Moisture")
+
+            # Add row for each species
+            for spc in dbAdapter.getList():
+                table.add_row(str(spc.speciesId), spc.name, str(spc.minMoisture))
+            console.print(table)
         else:
             print("No species available to show, please add one first.")
             return
@@ -303,21 +327,22 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("Choose how many entries:")
             userInputEntries = input("(show) >>> ")
 
-            print("[ID]:[PlantID] -> Moisture - Temperature - Minutes until Dry - [Timestamp]")
-            print("--------------------------------------------------------------------------")
+            # Setup columns
+            table.add_column("ID")
+            table.add_column("PlantID")
+            table.add_column("Moisture")
+            table.add_column("Temperature")
+            table.add_column("MinUntilDry")
+            table.add_column("isDry")
+            table.add_column("Timestamp")
+
+            # Add row for each measurement
+            for msr in dbAdapter.getList(plant=int(userInputId), limit=int(userInputEntries), mode="all"):
+                table.add_row(str(msr.measureId), str(msr.plantId), str(msr.moisture), str(msr.temperature), str(msr.minUntilDry), str(msr.isDry), msr.timestamp)
+            console.print(table)
         else:
             print("No measurements available to show.")
             return
-
-    # Get all objects from database
-    if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
-        result = dbAdapter.getList()
-    elif isinstance(dbAdapter, DBAdapterMeasurement):
-        result = dbAdapter.getList(plant=int(userInputId), limit=int(userInputEntries), mode="all")
-
-    # Print all objects
-    for object in result:
-        print(object.strDetail())
 
 def showEntryBrief(dbAdapter: DBAdapter):
     """
@@ -331,7 +356,7 @@ def showEntryBrief(dbAdapter: DBAdapter):
 
         # Print all objects
         for object in result:
-            print(object.strBrief())
+            print(object.__str__())
 
 def assignChannel(dbAdapter: DBAdapterPlant):
     """
@@ -404,9 +429,17 @@ def showChannel(dbAdapter: DBAdapterPlant):
     :param dbAdapter: Database adapter to access plants.
     :type dbAdapter: DBAdapterPlant
     """
-    # Print all channels
+    # Setup table
+    table = Table(box=box.MINIMAL)
+    table.add_column("ID")
+    table.add_column("Description")
+    table.add_column("PlantID")
+    table.add_column("Name")
+    
+    # Add row for each channel
     for ch in dbAdapter.getChannel("all"):
-        print(ch.strBrief())
+        table.add_row(str(ch.channelId), ch.chDescription, str(ch.plantId), ch.plantName)
+    console.print(table)
 
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     """
@@ -571,7 +604,7 @@ def weather():
 
 def help():
     """Prints the help menu."""
-    print("Available commands:")
+    console.print("Available commands:", style="bold")
     print("  add [plant,species]                Add a new plant or species")
     print("  delete [plant,species,measure]     Delete a plant, species or measurement")
     print("  show [plant,species,measure]       Show all plants, species or measurements")
