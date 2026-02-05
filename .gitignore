@@ -208,7 +208,7 @@ __marimo__/
 
 # Database and exports
 *.db
-*.csv
+measurements.csv
 *.png
 *.joblib
 

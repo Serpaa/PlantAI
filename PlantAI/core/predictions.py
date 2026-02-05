@@ -6,6 +6,7 @@ Created: 31.10.2025
 """
 
 import logging
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
@@ -35,24 +36,38 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
     :type dbAdapter: DBAdapterMeasurement
     """
     # Fill lists with all archived measurements
-    listMinUntilDry = []; listMoisture = []
-    allMeasurements = dbAdapter.getList(plantId, -1, "archived")
+    listMinUntilDry = []; listMoisture = []; listIsDry = []
+    allMeasurements = dbAdapter.getList(plantId, -1, "all")
 
     # Skip training if no archived measurements are returned
     if len(allMeasurements) > 0:
         for measurement in allMeasurements:
             listMinUntilDry.append(measurement.minUntilDry)
             listMoisture.append(measurement.moisture)
+            listIsDry.append(measurement.isDry)
 
         # Create dictionary from lists
         data = {
             'minUntilDry': listMinUntilDry,
-            'moisture': listMoisture
+            'moisture': listMoisture,
+            'isDry': listIsDry
         }
 
-        # Convert List into DataFrame and prepare features
+        # Convert List into DataFrame
         df = pd.DataFrame(data)
-        X = df[['moisture']]
+
+        # Calculate moisture slope
+        df["moistureSlope"] = (
+            df["moisture"]
+            .rolling(window=10, min_periods=10)
+            .apply(rollingSlope, raw=True)
+        )
+
+        # Calculate relative moisture
+        df["moistureRelative"] = df["moisture"] / df["moisture"].rolling(100).max()
+
+        # Prepare features and target
+        X = df[['moisture', 'moistureSlope', 'moistureRelative', 'isDry']]
         y = df['minUntilDry']
 
         # Save DataFrame as png
@@ -60,8 +75,7 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
             plot(df)
 
         # Split training and test data (80/20)
-        # random_state makes sure the data is always mixed the same way (only for testing)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2)
 
         # Prepare pipeline
         pipe = Pipeline([
@@ -136,6 +150,21 @@ def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
     # Log and return result
     logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
     return days, hours
+
+def rollingSlope(y):
+    """
+    Creates a linear polynom minimising the squared error through all values.
+
+    :param y: Values of the linear polynom.
+    :type y: array_like
+
+    :return: Highest degree coefficient (slope).
+    :rtype: float
+    """
+    window = len(y)
+    x = np.arange(window) # build array of x values
+    poly = np.polyfit(x, y, 1) # create first degree polynom (linear)
+    return poly[0]
 
 def plot(df: pd.DataFrame):
     """
