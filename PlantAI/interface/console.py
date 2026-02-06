@@ -78,7 +78,7 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 unknown()
         elif "model" in userInput:
             if "predict" in userInput:
-                predict(dbAdapterPlant)
+                predict(dbAdapterMeasurement, dbAdapterPlant)
             elif "train" in userInput:
                 train(dbAdapterMeasurement, dbAdapterPlant)
             else:
@@ -526,7 +526,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
-def predict(dbAdapter: DBAdapterPlant):
+def predict(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant):
     """
     Predicts in how many minutes the plants have to be watered.
     
@@ -534,15 +534,9 @@ def predict(dbAdapter: DBAdapterPlant):
     :type dbAdapter: DBAdapterPlant
     """
     summary = ""
-    for i, ch in enumerate(dbAdapter.getChannel("assigned")):
-        try:
-            # Get moisture and time until dry
-            curMoisture = readMoisture(ch.chMoisture, 1)
-            days, hours = predictTimeUntilDry(ch.plantId, curMoisture)
-        except NameError:
-            print("Prediction failed: Can't read current moisture, ADS1115 not initialized.")
-            logging.error("Prediction failed: Can't read current moisture, ADS1115 not initialized.")
-            break
+    for i, ch in enumerate(dbAdapterPlant.getChannel("assigned")):
+        # Get time until dry
+        days, hours = predictTimeUntilDry(ch.plantId, dbAdapterMeasurement)
 
         if i > 0:
             # Add line break if multiple channels are read
@@ -551,8 +545,10 @@ def predict(dbAdapter: DBAdapterPlant):
         if days == None and hours == None:
             # No prediction possible
             summary += f"[{ch.plantId}] {ch.plantName}: Not enough data collected to predict the moisture."
+        if days < 0 or hours < 0:
+            summary += f"[{ch.plantId}] {ch.plantName}: Plant is dry, water as soon as possible!"
         else:
-            summary += f"[{ch.plantId}] {ch.plantName}: {curMoisture}%: Water in {days} days and {hours} hours."
+            summary += f"[{ch.plantId}] {ch.plantName}: Water in {days} days and {hours} hours."
     
     # Print summary of all plants
     if summary != "":

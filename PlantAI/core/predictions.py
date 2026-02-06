@@ -113,14 +113,14 @@ def evaluation(pipe: Pipeline, X_test : list, y_test : list):
     r2 = r2_score(y_test, y_pred)
     logging.info(f"Evaluation - MAE: {mae:.3f}, R²: {r2:.3f}")
 
-def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
+def predictTimeUntilDry(plantId: int, dbAdapter : DBAdapterMeasurement) -> int:
     """
     Returns the days:hours it takes until the plant is dry and has to be watered again.
     
     :param plantId: Plant for which to make the prediction.
     :type plantId: int
-    :param curMoisture: Current measured moisture.
-    :type curMoisture: float
+    :param dbAdapter: Database adapter to access the measurements.
+    :type dbAdapter: DBAdapterMeasurement
 
     :return: Days and hours until the plant is dry. Returns none if no prediction could be made.
     :rtype: int, int
@@ -133,23 +133,51 @@ def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
         logging.error(f"Prediction failed: {ex}")
         return None, None
     
-    try:
-        # Create dataframe and make prediction
-        data = pd.DataFrame({'moisture': [curMoisture]})
-        prediction = pipe.predict(data)
-    except NotFittedError as ex:
-        # Return none if Pipeline hasn't been fitted yet
-        logging.error(f"Prediction failed: {ex}")
-        return None, None
+    # Get recent measurements
+    measurements = dbAdapter.getList(plantId, 100, "all")
+    moistureArray = np.array([msr.moisture for msr in measurements])
+    curMoisture = measurements[-1].moisture
+    curIsDry = measurements[-1].isDry
 
-    # Convert minutes to days and hours
-    time = timedelta(minutes=prediction[0])
-    days = time.days
-    hours = round(time.seconds / 3600)
+    if curIsDry:
+        # Log and return result if plant is dry
+        logging.info(f"Plant {plantId} - {curMoisture}% moisture")
+        logging.info(f"Prediction - Plant is dry, water as soon as possible!")
+        return -1, -1
+    else:
+        # Calculate moisture slope
+        moistureSlope = rollingSlope(moistureArray[-10:])
 
-    # Log and return result
-    logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
-    return days, hours
+        # Calculate relative moisture
+        dfr = pd.DataFrame({"moisture": moistureArray})
+        dfr["moistureRelative"] = dfr["moisture"] / dfr["moisture"].rolling(100).max()
+        moistureRelative = dfr.iloc[-1]["moistureRelative"]
+
+        # Build dataframe
+        df = pd.DataFrame({
+            "moisture": [curMoisture],
+            "moistureSlope": [moistureSlope],
+            "moistureRelative": [moistureRelative],
+            "isDry": [curIsDry]
+            })
+
+        try:
+            # Make prediction
+            prediction = pipe.predict(df)
+        except NotFittedError as ex:
+            # Return none if Pipeline hasn't been fitted yet
+            logging.error(f"Prediction failed: {ex}")
+            return None, None
+
+        # Convert minutes to days and hours
+        time = timedelta(minutes=prediction[0])
+        days = time.days
+        hours = round(time.seconds / 3600)
+
+        # Log and return result
+        logging.info(f"Plant {plantId} - {curMoisture}% moisture, {round(moistureSlope, 2)} slope, {round(moistureRelative, 2)} relative moisture")
+        logging.info(f"Prediction - Water in {days} days and {hours} hours.")
+        return days, hours
 
 def rollingSlope(y):
     """
