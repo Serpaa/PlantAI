@@ -48,7 +48,12 @@ def importFromCSV(path: str, plantId: int) -> list[measurement]:
         allMeasurements = []
         for row in reader:
             allMeasurements.append(
-                measurement(plantId=plantId, minUntilDry=row[0], isDry=row[1], moisture=row[2], temperature=row[3], timestamp=row[4]))
+                measurement(plantId=plantId,
+                            minUntilDry=int(row[0]),
+                            isDry=int(row[1]),
+                            moisture=float(row[2]),
+                            temperature=float(row[3]),
+                            timestamp=row[4]))
         return allMeasurements
     # Logs
     logging.info("Imported measurements from CSV.")
