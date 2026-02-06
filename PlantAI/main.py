@@ -19,6 +19,7 @@ initLog("PlantAI/resources", "plantai.log")
 
 # Import all other files
 from core.measurements import saveMeasurement
+from core.predictions import connectDBAdapter
 from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from interface.audio import vad
@@ -33,6 +34,9 @@ if not os.path.exists(dbPath):
 dbAdapterPlant = DBAdapterPlant()
 dbAdapterSpecies = DBAdapterSpecies()
 dbAdapterMeasurement = DBAdapterMeasurement()
+
+# Connect DBAdapter to predictions
+connectDBAdapter(dbAdapterMeasurement)
 
 # Threading event used for terminating safely
 threadStop = threading.Event()

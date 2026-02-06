@@ -26,14 +26,24 @@ config = stream["core"]["predictions"]
 # Constants
 SCATTER = config["createScatter"]
 
-def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
+# Global DBAdapter
+dbAdapter: DBAdapterMeasurement = None
+def connectDBAdapter(dbAdapterMeasurement: DBAdapterMeasurement):
+    """
+    Connects the DBAdapter to the predictions file.
+
+    :param dbAdapter: Database adapter to access the measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    """
+    global dbAdapter
+    dbAdapter = dbAdapterMeasurement
+
+def trainModel(plantId: int):
     """
     Trains the model of a plant using the archived measurements, skips if no archived measurements are found.
     
     :param plantId: Measurements of this PlantID are used to train the model.
     :type plantId: int
-    :param dbAdapter: Database adapter to access the measurements.
-    :type dbAdapter: DBAdapterMeasurement
     """
     # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []; listIsDry = []
@@ -113,16 +123,14 @@ def evaluation(pipe: Pipeline, X_test : list, y_test : list):
     r2 = r2_score(y_test, y_pred)
     logging.info(f"Evaluation - MAE: {mae:.3f}, R²: {r2:.3f}")
 
-def predictTimeUntilDry(plantId: int, dbAdapter : DBAdapterMeasurement) -> int:
+def predictTimeUntilDry(plantId: int) -> int:
     """
     Returns the days:hours it takes until the plant is dry and has to be watered again.
     
     :param plantId: Plant for which to make the prediction.
     :type plantId: int
-    :param dbAdapter: Database adapter to access the measurements.
-    :type dbAdapter: DBAdapterMeasurement
 
-    :return: Days and hours until the plant is dry. Returns none if no prediction could be made.
+    :return: Days, hours until the plant is dry. None if no prediction could be made. -1 if plant is dry.
     :rtype: int, int
     """
     try:

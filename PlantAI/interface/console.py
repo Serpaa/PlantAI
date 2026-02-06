@@ -78,9 +78,9 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 unknown()
         elif "model" in userInput:
             if "predict" in userInput:
-                predict(dbAdapterMeasurement, dbAdapterPlant)
+                predict(dbAdapterPlant)
             elif "train" in userInput:
-                train(dbAdapterMeasurement, dbAdapterPlant)
+                train(dbAdapterPlant)
             else:
                 unknown()
         elif userInput == "weather":
@@ -526,7 +526,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     exportAsCSV(path=path, allMeasurements=result)
     print("Export successful!")
 
-def predict(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant):
+def predict(dbAdapter: DBAdapterPlant):
     """
     Predicts in how many minutes the plants have to be watered.
     
@@ -534,18 +534,17 @@ def predict(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapte
     :type dbAdapter: DBAdapterPlant
     """
     summary = ""
-    for i, ch in enumerate(dbAdapterPlant.getChannel("assigned")):
+    for i, ch in enumerate(dbAdapter.getChannel("assigned")):
         # Get time until dry
-        days, hours = predictTimeUntilDry(ch.plantId, dbAdapterMeasurement)
+        days, hours = predictTimeUntilDry(ch.plantId)
 
         if i > 0:
             # Add line break if multiple channels are read
             summary += "\n"
 
         if days == None and hours == None:
-            # No prediction possible
             summary += f"[{ch.plantId}] {ch.plantName}: Not enough data collected to predict the moisture."
-        if days < 0 or hours < 0:
+        elif days == -1 or hours == -1:
             summary += f"[{ch.plantId}] {ch.plantName}: Plant is dry, water as soon as possible!"
         else:
             summary += f"[{ch.plantId}] {ch.plantName}: Water in {days} days and {hours} hours."
@@ -554,12 +553,10 @@ def predict(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapte
     if summary != "":
         print(summary)
 
-def train(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapterPlant):
+def train(showAdapter: DBAdapterPlant):
     """
     Manually train the model of a plant.
     
-    :param dbAdapter: Database adapter to access measurements.
-    :type dbAdapter: DBAdapterMeasurement
     :param showAdapter: Database adapter to show plants.
     :type showAdapter: DBAdapterPlant
     """
@@ -588,7 +585,7 @@ def train(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapterPlant):
         return
     
     # Train model of plant
-    trainModel(userInputId, dbAdapter)
+    trainModel(userInputId)
 
 def weather():
     """Prints a weather forecast of the current location."""
