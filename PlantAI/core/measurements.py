@@ -195,19 +195,19 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                             now = datetime.now()
                             timestamp = now.strftime(FORMAT)
 
-                            isDry = 0
+                            minUntilDry = -1; isDry = 0
                             # Plant turned from dry to watered
                             if watered:
                                 isDry = 0
 
                             # Plant just turned dry or is already dry
                             elif dry or lastMeasurement.isDry:
-                                isDry = 1
+                                minUntilDry = 0; isDry = 1
 
                             # Read moisture and temperature from SMT50 (-1 = non-archived entry)
                             moisture = readMoisture(ch.chMoisture, 5)
                             temperature = readTemperature(ch.chTemperature, 5)
-                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, -1, isDry, timestamp))
+                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, minUntilDry, isDry, timestamp))
                     elif MODE == "debug":
                         # Print data directly
                         moistureV = readVoltage(ch.chMoisture)
