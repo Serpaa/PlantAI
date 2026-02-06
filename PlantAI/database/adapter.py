@@ -257,7 +257,7 @@ class DBAdapterMeasurement(DBAdapter):
         :type limit: int
         :param mode:
             Sets the mode which measurements are returned: \n
-            - [archived]: Only archived, non dry measurements.
+            - [archived]: Only archived.
             - [current]: Only non-archived (minUntilDry = -1), non dry measurements.
             - [all]: All saved measurements.
         :type mode: str
@@ -268,7 +268,7 @@ class DBAdapterMeasurement(DBAdapter):
 
         # Select WHERE clause
         if mode == "archived":
-            whereClause = "AND minUntilDry != '-1' AND isDry = 0"
+            whereClause = "AND minUntilDry != '-1'"
         elif mode == "current":
             whereClause = "AND minUntilDry = '-1' AND isDry = 0"
         elif mode == "all":

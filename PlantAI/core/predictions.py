@@ -37,7 +37,7 @@ def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
     """
     # Fill lists with all archived measurements
     listMinUntilDry = []; listMoisture = []; listIsDry = []
-    allMeasurements = dbAdapter.getList(plantId, -1, "all")
+    allMeasurements = dbAdapter.getList(plantId, -1, "archived")
 
     # Skip training if no archived measurements are returned
     if len(allMeasurements) > 0:
