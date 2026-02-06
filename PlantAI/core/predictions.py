@@ -176,7 +176,7 @@ def predictTimeUntilDry(plantId: int, dbAdapter : DBAdapterMeasurement) -> int:
 
         # Log and return result
         logging.info(f"Plant {plantId} - {curMoisture}% moisture, {round(moistureSlope, 2)} slope, {round(moistureRelative, 2)} relative moisture")
-        logging.info(f"Prediction - Water in {days} days and {hours} hours.")
+        logging.info(f"Prediction {prediction[0]}min - Water in {days} days and {hours} hours.")
         return days, hours
 
 def rollingSlope(y):
