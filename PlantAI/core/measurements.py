@@ -186,7 +186,7 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                             setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, lastMeasurement)
 
                             # Train model using the now archived measurements
-                            trainModel(ch.plantId, dbAdapterMeasurement)
+                            trainModel(ch.plantId)
 
                         # Skip insert after the plant was watered
                         # creates a little buffer while water spreads through the soil

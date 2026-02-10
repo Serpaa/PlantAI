@@ -12,7 +12,6 @@ from rich.console import Console
 from rich.table import Table
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
-from core.measurements import readMoisture
 from core.models import plant, species
 from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
