@@ -45,9 +45,9 @@ def trainModel(plantId: int):
     :param plantId: Measurements of this PlantID are used to train the model.
     :type plantId: int
     """
-    # Fill lists with all archived measurements
+    # Fill lists with archived measurements (2880 = 1 month)
     listMinUntilDry = []; listMoisture = []; listIsDry = []
-    allMeasurements = dbAdapter.getList(plantId, -1, "archived")
+    allMeasurements = dbAdapter.getList(plantId, 2880, "archived")
 
     # Skip training if no archived measurements are returned
     if len(allMeasurements) > 0:
