@@ -166,7 +166,7 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                     # Check if reading mode is interval or debug
                     if MODE == "interval":
                         # Check if recent measurement exists
-                        watered = False; dry = False
+                        watered = False; dry = False; lastMeasurementDry = False
                         lastMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
                         if lastMeasurement is None:
                             logging.info("No recent measurement found. All checks skipped.")
@@ -174,12 +174,18 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                         # Check if plant got watered since last measurement
                         elif checkWatered(lastMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
                             logging.info("Watering detected.")
+                            lastMeasurementDry = lastMeasurement.isDry
                             watered = True
 
                         # Check if plant dropped below minMoisture
                         elif checkDry(lastMeasurement, dbAdapterPlant):
                             logging.info("Plant turning dry detected.")
+                            lastMeasurementDry = lastMeasurement.isDry
                             dry = True
+
+                        else:
+                            # Avoid checking NoneType object
+                            lastMeasurementDry = lastMeasurement.isDry
 
                         # Set minutes until dry for all previous measurements
                         if watered or dry:
@@ -190,7 +196,7 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
 
                         # Skip insert after the plant was watered
                         # creates a little buffer while water spreads through the soil
-                        if not watered or lastMeasurement.isDry:
+                        if not watered or lastMeasurementDry:
                             # Format timestamp
                             now = datetime.now()
                             timestamp = now.strftime(FORMAT)
@@ -201,7 +207,7 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                                 isDry = 0
 
                             # Plant just turned dry or is already dry
-                            elif dry or lastMeasurement.isDry:
+                            elif dry or lastMeasurementDry:
                                 minUntilDry = 0; isDry = 1
 
                             # Read moisture and temperature from SMT50 (-1 = non-archived entry)
