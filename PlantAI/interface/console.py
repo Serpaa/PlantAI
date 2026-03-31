@@ -5,18 +5,32 @@ Author: Tim Grundey
 Created: 30.09.2025
 """
 
-import logging, sys
+import logging
 from sqlite3 import IntegrityError
+from rich import box
+from rich.console import Console
+from rich.table import Table
 from api.weather import getForecast
 from database.adapter import DBAdapter, DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
-from core.measurements import readMoisture
 from core.models import plant, species
-from core.predictions import predictTimeUntilDry
+from core.predictions import trainModel, predictTimeUntilDry
 from system.streams import exportAsCSV, importFromCSV
 
+# Setup rich console
+console = Console()
+
 def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies, dbAdapterMeasurement: DBAdapterMeasurement):
-    """Main Menu of the console interface."""
-    print("Welcome to PlantAI!")
+    """
+    Main menu of the console interface, loops the main thread.
+    
+    :param dbAdapterPlant: Database adapter to access the plants.
+    :type dbAdapterPlant: DBAdapterPlant
+    :param dbAdapterSpecies: Database adapter to access the species.
+    :type dbAdapterSpecies: DBAdapterSpecies
+    :param dbAdapterMeasurement: Database adapter to access the measurements.
+    :type dbAdapterMeasurement: DBAdapterMeasurement
+    """
+    console.print("Welcome to [bold]PlantAI[/bold]!")
     while True:
         # Wait for user input
         userInput = input("(main) >>> ")
@@ -61,19 +75,32 @@ def mainMenu(dbAdapterPlant: DBAdapterPlant, dbAdapterSpecies: DBAdapterSpecies,
                 exportEntry(dbAdapterMeasurement, dbAdapterPlant)
             else:
                 unknown()
-        elif userInput == "predict":
-            predict(dbAdapterPlant)
+        elif "model" in userInput:
+            if "predict" in userInput:
+                predict(dbAdapterPlant)
+            elif "train" in userInput:
+                train(dbAdapterPlant)
+            else:
+                unknown()
         elif userInput == "weather":
             weather()
         elif userInput == "help":
             help()
         elif userInput == "exit" or userInput == "bye":
             bye()
+            break
         else:
             unknown()
 
 def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
-    """Add a new entry to the database."""
+    """
+    Add a new plant or species to the database.
+    
+    :param dbAdapter: Database adapter to access the plants or species.
+    :type dbAdapter: DBAdapter
+    :param showAdapter: Database adapter to show species.
+    :type showAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant):
         print("Choose a name:")
 
@@ -181,7 +208,14 @@ def addEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     dbAdapter.insert(data)
 
 def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
-    """Deletes the selected entry from the database."""
+    """
+    Deletes the plant, species or measurement from the database.
+    
+    :param dbAdapter: Database adapter to access plants, species or measurements.
+    :type dbAdapter: DBAdapter
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant):
         # Check if any plants exist
         if dbAdapter.exists() == 1:
@@ -238,12 +272,30 @@ def deleteEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("No matching measurements found. Returning to menu ...")
 
 def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
-    """Prints all entries from a specific table."""
+    """
+    Prints all plants, species or measurements.
+    
+    :param dbAdapter: Database adapter to access plants, species or measurements.
+    :type dbAdapter: DBAdapter
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
+    # Setup table
+    table = Table(box=box.MINIMAL)
+    
     if isinstance(dbAdapter, DBAdapterPlant):
         # Check if any plants exist
         if dbAdapter.exists() == 1:
-            print("[ID]:[SpeciesID] Name -> Location")
-            print("---------------------------------")
+            # Setup columns
+            table.add_column("ID")
+            table.add_column("SpeciesID")
+            table.add_column("Name")
+            table.add_column("Location")
+
+            # Add row for each plant
+            for plt in dbAdapter.getList():
+                table.add_row(str(plt.plantId), str(plt.speciesId), plt.name, plt.location)
+            console.print(table)
         else:
             print("No plants available to show, please add one first.")
             return
@@ -251,8 +303,15 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
     elif isinstance(dbAdapter, DBAdapterSpecies):
         # Check if any species exist
         if dbAdapter.exists() == 1:
-            print("[ID] Name -> min. Moisture")
-            print("--------------------------")
+            # Setup columns
+            table.add_column("ID")
+            table.add_column("Name")
+            table.add_column("min. Moisture")
+
+            # Add row for each species
+            for spc in dbAdapter.getList():
+                table.add_row(str(spc.speciesId), spc.name, str(spc.minMoisture))
+            console.print(table)
         else:
             print("No species available to show, please add one first.")
             return
@@ -267,33 +326,44 @@ def showEntry(dbAdapter: DBAdapter, showAdapter: DBAdapter = None):
             print("Choose how many entries:")
             userInputEntries = input("(show) >>> ")
 
-            print("[ID]:[PlantID] -> Moisture - Temperature - Minutes until Dry - [Timestamp]")
-            print("--------------------------------------------------------------------------")
+            # Setup columns
+            table.add_column("ID")
+            table.add_column("PlantID")
+            table.add_column("Moisture")
+            table.add_column("Temperature")
+            table.add_column("MinUntilDry")
+            table.add_column("isDry")
+            table.add_column("Timestamp")
+
+            # Add row for each measurement
+            for msr in dbAdapter.getList(plant=int(userInputId), limit=int(userInputEntries), mode="all"):
+                table.add_row(str(msr.measureId), str(msr.plantId), str(msr.moisture), str(msr.temperature), str(msr.minUntilDry), str(msr.isDry), msr.timestamp)
+            console.print(table)
         else:
             print("No measurements available to show.")
             return
 
-    # Get all objects from database
-    if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
-        result = dbAdapter.getList()
-    elif isinstance(dbAdapter, DBAdapterMeasurement):
-        result = dbAdapter.getList(plant=int(userInputId), limit=int(userInputEntries), mode="all")
-
-    # Print all objects
-    for object in result:
-        print(object.strDetail())
-
 def showEntryBrief(dbAdapter: DBAdapter):
-    """Prints a brief description from a specific table."""
+    """
+    Prints a brief overview of available plants or species.
+    
+    :param dbAdapter: Database adapter to access plants or species.
+    :type dbAdapter: DBAdapter
+    """
     if isinstance(dbAdapter, DBAdapterPlant) or isinstance(dbAdapter, DBAdapterSpecies):
         result = dbAdapter.getList()
 
         # Print all objects
         for object in result:
-            print(object.strBrief())
+            print(object.__str__())
 
 def assignChannel(dbAdapter: DBAdapterPlant):
-    """Assign an input channel to a plant."""
+    """
+    Assign an input channel to a plant.
+    
+    :param dbAdapter: Database adapter to access plants.
+    :type dbAdapter: DBAdapterPlant
+    """
     # Check if any plants exist
     print("Choose a plant (ID):")
     print("[0] * None * ")
@@ -352,13 +422,33 @@ def assignChannel(dbAdapter: DBAdapterPlant):
         print(f"Plant {userInputPlant} assigned to channel {userInputChannel}!")
 
 def showChannel(dbAdapter: DBAdapterPlant):
-    """Prints a description of all input channels and their assigned plants."""
-    # Print all channels
+    """
+    Prints a description of all input channels and their assigned plants.
+    
+    :param dbAdapter: Database adapter to access plants.
+    :type dbAdapter: DBAdapterPlant
+    """
+    # Setup table
+    table = Table(box=box.MINIMAL)
+    table.add_column("ID")
+    table.add_column("Description")
+    table.add_column("PlantID")
+    table.add_column("Name")
+    
+    # Add row for each channel
     for ch in dbAdapter.getChannel("all"):
-        print(ch.strBrief())
+        table.add_row(str(ch.channelId), ch.chDescription, str(ch.plantId), ch.plantName)
+    console.print(table)
 
 def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
-    """Imports measurements of the selected plant as CSV."""
+    """
+    Imports measurements of the selected plant as CSV.
+    
+    :param dbAdapter: Database adapter to access measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     # Check if any plants exist
     print("Choose a plant (ID) to import the measurements for:")
     if showAdapter.exists() == 1:
@@ -395,7 +485,14 @@ def importEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
         logging.error(f"Import failed! No such file: {path}")
 
 def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
-    """Exports measurements of the selected plant as CSV."""
+    """
+    Exports measurements of the selected plant as CSV.
+    
+    :param dbAdapter: Database adapter to access measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapter
+    """
     print("Choose a plant (ID) to export the measurements for:")
     if showAdapter.exists() == 1:
         showEntryBrief(showAdapter)
@@ -411,7 +508,7 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
                 print("Please enter a number.")
                 continue
 
-            # Check if selected species exists
+            # Check if selected plant exists
             if showAdapter.existsId(userInputId) == 1:
                 break
             else:
@@ -429,31 +526,65 @@ def exportEntry(dbAdapter: DBAdapterMeasurement, showAdapter: DBAdapter = None):
     print("Export successful!")
 
 def predict(dbAdapter: DBAdapterPlant):
-    """Predicts in how many minutes the plants have to be watered."""
+    """
+    Predicts in how many minutes the plants have to be watered.
+    
+    :param dbAdapter: Database adapter to access plants.
+    :type dbAdapter: DBAdapterPlant
+    """
     summary = ""
     for i, ch in enumerate(dbAdapter.getChannel("assigned")):
-        try:
-            # Get moisture and time until dry
-            curMoisture = readMoisture(ch.chMoisture, 1)
-            days, hours = predictTimeUntilDry(ch.plantId, curMoisture)
-        except NameError:
-            print("Prediction failed: Can't read current moisture, ADS1115 not initialized.")
-            logging.error("Prediction failed: Can't read current moisture, ADS1115 not initialized.")
-            break
+        # Get time until dry
+        days, hours = predictTimeUntilDry(ch.plantId)
 
         if i > 0:
             # Add line break if multiple channels are read
             summary += "\n"
 
         if days == None and hours == None:
-            # No prediction possible
             summary += f"[{ch.plantId}] {ch.plantName}: Not enough data collected to predict the moisture."
+        elif days == -1 or hours == -1:
+            summary += f"[{ch.plantId}] {ch.plantName}: Plant is dry, water as soon as possible!"
         else:
-            summary += f"[{ch.plantId}] {ch.plantName}: {curMoisture}%: Water in {days} days and {hours} hours."
+            summary += f"[{ch.plantId}] {ch.plantName}: Water in {days} days and {hours} hours."
     
     # Print summary of all plants
     if summary != "":
         print(summary)
+
+def train(showAdapter: DBAdapterPlant):
+    """
+    Manually train the model of a plant.
+    
+    :param showAdapter: Database adapter to show plants.
+    :type showAdapter: DBAdapterPlant
+    """
+    print("Choose a plant (ID) to train the model for:")
+    if showAdapter.exists() == 1:
+        showEntryBrief(showAdapter)
+
+        while True:
+            # Loop in case the input is invalid
+            userInputId = input("(train) >>> ")
+
+            try:
+                # Convert input to int
+                userInputId = int(userInputId)
+            except ValueError:
+                print("Please enter a number.")
+                continue
+
+            # Check if selected plant exists
+            if showAdapter.existsId(userInputId) == 1:
+                break
+            else:
+                print("Selected plant doesn't exist. Please try again.")
+    else:
+        print("No plant available to select, please add one first.")
+        return
+    
+    # Train model of plant
+    trainModel(userInputId)
 
 def weather():
     """Prints a weather forecast of the current location."""
@@ -465,13 +596,13 @@ def weather():
 
 def help():
     """Prints the help menu."""
-    print("Available commands:")
+    console.print("Available commands:", style="bold")
     print("  add [plant,species]                Add a new plant or species")
     print("  delete [plant,species,measure]     Delete a plant, species or measurement")
     print("  show [plant,species,measure]       Show all plants, species or measurements")
     print("  channel [assign,view]              Assign, unassign or view input channels")
     print("  csv [import,export]                Imports or exports all measurements using CSV")
-    print("  predict                            Predicts when plants have to be watered")
+    print("  model [predict,train]              Manually train model or predict moisture")
     print("  weather                            Show weather forecast")
     print("  help                               Show this help message")
     print("  exit,bye                           Exit")
@@ -484,4 +615,3 @@ def bye():
     """Exits the system."""
     print("Goodbye!")
     logging.info("System shutdown.")
-    sys.exit() 

@@ -5,7 +5,7 @@ Author: Tim Grundey
 Created: 10.10.2025
 """
 
-import logging, time, platform
+import logging, time, platform, threading
 from datetime import datetime
 from core.models import measurement
 from core.predictions import trainModel
@@ -85,7 +85,7 @@ def readTemperature(channel: int, cycle : int) -> float:
         time.sleep(1)
     return round(totalTemperature / cycle, 2) # auf 2 Nachkommastellen runden
 
-def watered(old : float, new : float) -> bool:
+def checkWatered(old: float, new: float) -> bool:
     """
     Checks if a plant has been watered recently by comparing moisture.
 
@@ -101,8 +101,32 @@ def watered(old : float, new : float) -> bool:
         return True
     else:
         return False
+    
+def checkDry(lastMeasurement: measurement, dbAdapterPlant: DBAdapterPlant) -> bool:
+    """
+    Checks if a plant turned dry by comparing moisture.
 
-def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant):
+    :param lastMeasurement: Last moisture measurement.
+    :type lastMeasurement: measurement
+    :param dbAdapterPlant: Database adapter to access the measurements.
+    :type dbAdapterPlant: DBAdapterPlant
+
+    :return: Returns true if plant just turned dry.
+    :rtype: bool
+    """
+    minMoisture = dbAdapterPlant.getMinMoisture(lastMeasurement.plantId)
+
+    # Measurement is already flagged as dry
+    if lastMeasurement.isDry == 1:
+        return False
+    
+    # Compare moisture against minimum Moisture
+    elif lastMeasurement.moisture <= minMoisture:
+        return True
+    else:
+        return False
+
+def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: DBAdapterPlant, threadStop: threading.Event):
     """
     Saves the current moisture and temperature measurements of all assigned channels every x minutes.
     
@@ -110,15 +134,25 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
     :type dbAdapterMeasurement: DBAdapterMeasurement
     :param dbAdapterPlant: Database adapter to access the plants.
     :type dbAdapterPlant: DBAdapterPlant
+    :param threadStop: Shutdown the thread with Event.set()
+    :type threadStop: threading.Event
     """
     # Skip reading sensor data if not running on Jetson Nano
     if "tegra" in platform.release():
-        while True:
-            # Wait until reading depening on mode
-            if MODE == "interval":
-                time.sleep(SLEEP)
-            elif MODE == "debug":
-                time.sleep(2)
+
+        # Set timout length depening on mode
+        if MODE == "interval":
+            sleep = SLEEP
+        elif MODE == "debug":
+            sleep = 2
+
+        while not threadStop.is_set():
+            # Wait interval time
+            threadStop.wait(timeout=sleep)
+
+            # Exit function early during shutdown
+            if threadStop.is_set():
+                break
 
             # Get all assigned input channels
             channels = dbAdapterPlant.getChannel("assigned")
@@ -132,31 +166,54 @@ def saveMeasurement(dbAdapterMeasurement: DBAdapterMeasurement, dbAdapterPlant: 
                     # Check if reading mode is interval or debug
                     if MODE == "interval":
                         # Check if recent measurement exists
-                        skipInsert = False
-                        recentMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
-                        if recentMeasurement is None:
-                            logging.info("No recent measurement found. Watering check skipped.")
+                        watered = False; dry = False; lastMeasurementDry = False
+                        lastMeasurement = dbAdapterMeasurement.getSingle(plant=ch.plantId, mode="recent")
+                        if lastMeasurement is None:
+                            logging.info("No recent measurement found. All checks skipped.")
                             
                         # Check if plant got watered since last measurement
-                        elif watered(recentMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
-                            # Set minutes until dry for all previous measurements
+                        elif checkWatered(lastMeasurement.moisture, readMoisture(ch.chMoisture, 1)):
                             logging.info("Watering detected.")
-                            setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, recentMeasurement)
+                            lastMeasurementDry = lastMeasurement.isDry
+                            watered = True
+
+                        # Check if plant dropped below minMoisture
+                        elif checkDry(lastMeasurement, dbAdapterPlant):
+                            logging.info("Plant turning dry detected.")
+                            lastMeasurementDry = lastMeasurement.isDry
+                            dry = True
+
+                        else:
+                            # Avoid checking NoneType object
+                            lastMeasurementDry = lastMeasurement.isDry
+
+                        # Set minutes until dry for all previous measurements
+                        if watered or dry:
+                            setMinutesUntilDry(ch.plantId, dbAdapterMeasurement, lastMeasurement)
 
                             # Train model using the now archived measurements
-                            trainModel(ch.plantId, dbAdapterMeasurement)
-                            skipInsert = True
+                            trainModel(ch.plantId)
 
-                        # Skip insert after minutes until dry were set
-                        if not skipInsert:
+                        # Skip insert after the plant was watered
+                        # creates a little buffer while water spreads through the soil
+                        if not watered or lastMeasurementDry:
                             # Format timestamp
                             now = datetime.now()
                             timestamp = now.strftime(FORMAT)
 
+                            minUntilDry = -1; isDry = 0
+                            # Plant turned from dry to watered
+                            if watered:
+                                isDry = 0
+
+                            # Plant just turned dry or is already dry
+                            elif dry or lastMeasurementDry:
+                                minUntilDry = 0; isDry = 1
+
                             # Read moisture and temperature from SMT50 (-1 = non-archived entry)
                             moisture = readMoisture(ch.chMoisture, 5)
                             temperature = readTemperature(ch.chTemperature, 5)
-                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, -1, timestamp))
+                            dbAdapterMeasurement.insert(measurement(ch.plantId, moisture, temperature, minUntilDry, isDry, timestamp))
                     elif MODE == "debug":
                         # Print data directly
                         moistureV = readVoltage(ch.chMoisture)

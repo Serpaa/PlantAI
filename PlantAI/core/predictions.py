@@ -6,6 +6,7 @@ Created: 31.10.2025
 """
 
 import logging
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
@@ -17,42 +18,64 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
 from database.adapter import DBAdapterMeasurement
 
-def trainModel(plantId: int, dbAdapter : DBAdapterMeasurement):
+# Global DBAdapter
+dbAdapter: DBAdapterMeasurement = None
+def connectDBAdapter(dbAdapterMeasurement: DBAdapterMeasurement):
+    """
+    Connects the DBAdapter to the predictions file.
+
+    :param dbAdapter: Database adapter to access the measurements.
+    :type dbAdapter: DBAdapterMeasurement
+    """
+    global dbAdapter
+    dbAdapter = dbAdapterMeasurement
+
+def trainModel(plantId: int):
     """
     Trains the model of a plant using the archived measurements, skips if no archived measurements are found.
     
     :param plantId: Measurements of this PlantID are used to train the model.
     :type plantId: int
-    :param dbAdapter: Database adapter to access the measurements.
-    :type dbAdapter: DBAdapterMeasurement
     """
-    # Fill lists with all archived measurements
-    listMinUntilDry = []; listMoisture = []
-    allMeasurements = dbAdapter.getList(plantId, -1, "archived")
+    # Fill lists with archived measurements (2880 = 1 month)
+    listMinUntilDry = []; listMoisture = []; listTemperature = []; listIsDry = []
+    allMeasurements = dbAdapter.getList(plantId, 2880, "archived")
 
     # Skip training if no archived measurements are returned
     if len(allMeasurements) > 0:
         for measurement in allMeasurements:
             listMinUntilDry.append(measurement.minUntilDry)
             listMoisture.append(measurement.moisture)
+            listTemperature.append(measurement.temperature)
+            listIsDry.append(measurement.isDry)
 
         # Create dictionary from lists
         data = {
             'minUntilDry': listMinUntilDry,
-            'moisture': listMoisture
+            'moisture': listMoisture,
+            'temperature': listTemperature,
+            'isDry': listIsDry
         }
 
-        # Convert List into DataFrame and prepare features
+        # Convert List into DataFrame
         df = pd.DataFrame(data)
-        X = df[['moisture']]
+
+        # Calculate moisture slope
+        df["moistureSlope"] = (
+            df["moisture"]
+            .rolling(window=10, min_periods=10)
+            .apply(rollingSlope, raw=True)
+        )
+
+        # Calculate normalised moisture
+        df["moistureNormalised"] = df["moisture"] / df["moisture"].rolling(100).max()
+
+        # Prepare features and target
+        X = df[['moisture', 'moistureSlope', 'moistureNormalised', 'temperature', 'isDry']]
         y = df['minUntilDry']
 
-        # Save DataFrame as png
-        # plot(df)
-
         # Split training and test data (80/20)
-        # random_state makes sure the data is always mixed the same way (only for testing)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2)
 
         # Prepare pipeline
         pipe = Pipeline([
@@ -90,16 +113,14 @@ def evaluation(pipe: Pipeline, X_test : list, y_test : list):
     r2 = r2_score(y_test, y_pred)
     logging.info(f"Evaluation - MAE: {mae:.3f}, R²: {r2:.3f}")
 
-def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
+def predictTimeUntilDry(plantId: int) -> int:
     """
     Returns the days:hours it takes until the plant is dry and has to be watered again.
     
     :param plantId: Plant for which to make the prediction.
     :type plantId: int
-    :param curMoisture: Current measured moisture.
-    :type curMoisture: float
 
-    :return: Days and hours until the plant is dry. Returns none if no prediction could be made.
+    :return: Days, hours until the plant is dry. None if no prediction could be made. -1 if plant is dry.
     :rtype: int, int
     """
     try:
@@ -110,23 +131,68 @@ def predictTimeUntilDry(plantId: int, curMoisture : float) -> int:
         logging.error(f"Prediction failed: {ex}")
         return None, None
     
-    try:
-        # Create dataframe and make prediction
-        data = pd.DataFrame({'moisture': [curMoisture]})
-        prediction = pipe.predict(data)
-    except NotFittedError as ex:
-        # Return none if Pipeline hasn't been fitted yet
-        logging.error(f"Prediction failed: {ex}")
-        return None, None
+    # Get recent measurements
+    measurements = dbAdapter.getList(plantId, 100, "all")
+    moistureArray = np.array([msr.moisture for msr in measurements])
+    curMoisture = measurements[-1].moisture
+    curTemperature = measurements[-1].temperature
+    curIsDry = measurements[-1].isDry
 
-    # Convert minutes to days and hours
-    time = timedelta(minutes=prediction[0])
-    days = time.days
-    hours = round(time.seconds / 3600)
+    if curIsDry:
+        # Log and return result if plant is dry
+        logging.info(f"Plant {plantId} - {curMoisture}% moisture")
+        logging.info(f"Prediction - Plant is dry, water as soon as possible!")
+        return -1, -1
+    else:
+        # Calculate moisture slope
+        moistureSlope = rollingSlope(moistureArray[-10:])
 
-    # Log and return result
-    logging.info(f"Prediction - {curMoisture}%: Water in {days} days and {hours} hours.")
-    return days, hours
+        # Calculate normalised moisture
+        dfr = pd.DataFrame({"moisture": moistureArray})
+        dfr["moistureNormalised"] = dfr["moisture"] / dfr["moisture"].rolling(100).max()
+        moistureNormalised = dfr.iloc[-1]["moistureNormalised"]
+
+        # Build dataframe
+        df = pd.DataFrame({
+            "moisture": [curMoisture],
+            "moistureSlope": [moistureSlope],
+            "moistureNormalised": [moistureNormalised],
+            "temperature": [curTemperature],
+            "isDry": [curIsDry]
+            })
+
+        try:
+            # Make prediction
+            prediction = pipe.predict(df)
+        except NotFittedError as ex:
+            # Return none if Pipeline hasn't been fitted yet
+            logging.error(f"Prediction failed: {ex}")
+            return None, None
+
+        # Convert minutes to days and hours
+        time = timedelta(minutes=prediction[0])
+        days = time.days
+        hours = round(time.seconds / 3600)
+
+        # Log and return result
+        logging.info(f"Plant {plantId} - {curMoisture}% moisture, {round(moistureSlope, 2)} slope, {round(moistureNormalised, 2)} normalised moisture, {curTemperature} °C temperature")
+        logging.info(f"Prediction {prediction[0]}min - Water in {days} days and {hours} hours.")
+        return days, hours
+
+def rollingSlope(y):
+    """
+    Creates a linear polynom minimising the squared error through all values.
+
+    :param y: Values of the linear polynom.
+    :type y: array_like
+
+    :return: Highest degree coefficient (slope).
+    :rtype: float
+    """
+    window = len(y)
+    x = np.arange(window) # build array of x values
+    poly = np.polyfit(x, y, 1) # create first degree polynom (linear)
+    return poly[0]
 
 def plot(df: pd.DataFrame):
     """
@@ -135,9 +201,9 @@ def plot(df: pd.DataFrame):
     :param df: Dataframe to be saved.
     :type df: DataFrame
     """
-    # Create plot from DataFrame
+    # Create scatter plot from DataFrame
     plt.figure(figsize=(12, 5), dpi=250)
-    plt.plot(df["minUntilDry"], df["moisture"])
+    plt.scatter(df["minUntilDry"], df["moisture"], s=10)
     plt.xlabel("Minutes until Dry")
     plt.ylabel("Moisture")
     plt.title("Measurements")

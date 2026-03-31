@@ -5,7 +5,7 @@ Author: Tim Grundey
 Created: 24.09.2025
 """
 
-import os, logging, threading
+import os, sys, logging, threading
 
 # Create archive and model folders
 folders = ["PlantAI/resources/archive", "PlantAI/resources/models"]
@@ -19,6 +19,7 @@ initLog("PlantAI/resources", "plantai.log")
 
 # Import all other files
 from core.measurements import saveMeasurement
+from core.predictions import connectDBAdapter
 from database.connector import createDB
 from database.adapter import DBAdapterPlant, DBAdapterSpecies, DBAdapterMeasurement
 from interface.audio import vad
@@ -34,12 +35,18 @@ dbAdapterPlant = DBAdapterPlant()
 dbAdapterSpecies = DBAdapterSpecies()
 dbAdapterMeasurement = DBAdapterMeasurement()
 
+# Connect DBAdapter to predictions
+connectDBAdapter(dbAdapterMeasurement)
+
+# Threading event used for terminating safely
+threadStop = threading.Event()
+
 # Start new thread for reading sensor data
-threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant), daemon=True)
+threadSensor = threading.Thread(target=saveMeasurement, args=(dbAdapterMeasurement,dbAdapterPlant,threadStop))
 threadSensor.start()
 
 # Start new thread for voice detection
-threadVAD = threading.Thread(target=vad, daemon=True)
+threadVAD = threading.Thread(target=vad, args=(threadStop,))
 threadVAD.start()
 
 # Logs
@@ -47,3 +54,11 @@ logging.info("System booted.")
 
 # Initialize Console
 mainMenu(dbAdapterPlant, dbAdapterSpecies, dbAdapterMeasurement)
+
+# Stop threads and wait for them to terminate ...
+threadStop.set()
+threadSensor.join()
+threadVAD.join()
+
+# Exit
+sys.exit()

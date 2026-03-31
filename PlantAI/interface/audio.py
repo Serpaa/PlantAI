@@ -8,7 +8,7 @@ Author: Tim Grundey
 Created: 26.11.2025
 """
 
-import logging, os, platform, pyaudio, time, wave, warnings
+import logging, os, platform, pyaudio, time, wave, warnings, threading
 import numpy as np
 from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
 from silero import silero_stt, silero_tts
@@ -63,9 +63,12 @@ os.chdir(cwd)
 model_tts.to(DEVICE_TTS)
 model_stt.to(DEVICE_STT)
 
-def vad():
+def vad(threadStop: threading.Event):
     """
     Records audio and checks for voice activity.
+
+    :param threadStop: Shutdown the thread with Event.set()
+    :type threadStop: threading.Event
     """
     speechDetected = False; lastSpeech = 0
     wakewordDetected = False; lastWakeword = 0
@@ -94,8 +97,8 @@ def vad():
         input=True,
         output=True,
         frames_per_buffer=CHUNK)
-    
-    while True:
+        
+    while not threadStop.is_set():
         # Seperate audio into chunks
         audioChunk = stream.read(num_frames=SAMPLE_RATE, exception_on_overflow=False)
 
@@ -163,6 +166,10 @@ def vad():
                 if (now - lastWakeword) > TIMEOUT:
                     wakewordDetected = False
                     logging.warning(f"Command timeout after {TIMEOUT}s")
+    else:
+        # Close audio stream
+        stream.close()
+        pa.terminate()
 
 def stt(speech: bytes) -> str:
     """

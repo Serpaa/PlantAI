@@ -22,9 +22,9 @@ def exportAsCSV(path: str, allMeasurements: list[measurement]):
         writer = csv.writer(file)
 
         # Write header then all data rows
-        writer.writerow(["Minutes until Dry", "Moisture", "Temperature", "Timestamp"])
+        writer.writerow(["Minutes until Dry", "isDry", "Moisture", "Temperature", "Timestamp"])
         for object in allMeasurements:
-            writer.writerow([object.minUntilDry, object.moisture, object.temperature, object.timestamp])
+            writer.writerow([object.minUntilDry, object.isDry, object.moisture, object.temperature, object.timestamp])
     # Logs
     logging.info("CSV export created.")
 
@@ -48,7 +48,12 @@ def importFromCSV(path: str, plantId: int) -> list[measurement]:
         allMeasurements = []
         for row in reader:
             allMeasurements.append(
-                measurement(plantId = plantId, minUntilDry = row[0], moisture = row[1], temperature = row[2], timestamp = row[3]))
+                measurement(plantId=plantId,
+                            minUntilDry=int(row[0]),
+                            isDry=int(row[1]),
+                            moisture=float(row[2]),
+                            temperature=float(row[3]),
+                            timestamp=row[4]))
         return allMeasurements
     # Logs
     logging.info("Imported measurements from CSV.")

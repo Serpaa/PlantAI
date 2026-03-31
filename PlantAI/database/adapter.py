@@ -114,6 +114,26 @@ class DBAdapterPlant(DBAdapter):
                                        chDescription=entry[3], plantId=entry[4], plantName=entry[5]))
         return allChannels
     
+    def getMinMoisture(self, plantId: int) -> float:
+        """
+        Returns the minimum moisture of a plant through it's species.
+
+        :param plantId: ID of the plant.
+        :type mode: int
+
+        :return: The minimum moisture.
+        :rtype: float
+        """
+                
+        query = """
+            SELECT s.minMoisture FROM species AS s
+            JOIN plants AS p ON s.speciesId = p.speciesId
+            WHERE p.plantId = ?
+            """
+        values = (plantId,)
+        result = fetchone(query, values)
+        return result[0]
+    
     def exists(self) -> int:
         query = "SELECT EXISTS (SELECT 1 FROM plants)"
         result = fetchone(query,)
@@ -192,14 +212,14 @@ class DBAdapterSpecies(DBAdapter):
 class DBAdapterMeasurement(DBAdapter):
     def getSingle(self, plant: int, mode: str = "recent") -> measurement:
         """
-        Returns a single measurement.
+        Returns a single non-archived (minUntilDry = -1) measurement.
 
         :param plant: Plant the measurement belongs to.
         :type plant: int
         :param mode:
             Sets the mode which measurement is returned: \n
             - [recent]: Returns the most recent measurement.
-            - [old]: The oldest non-archived (minUntilDry = -1) measurement.
+            - [old]: The oldest measurement.
         :type mode: str
 
         :return: Single measurement.
@@ -225,7 +245,7 @@ class DBAdapterMeasurement(DBAdapter):
             return None
         else:
             return measurement(measureId=result[0],plantId=result[1], moisture=result[2], 
-                               temperature=result[3], minUntilDry=result[4], timestamp=result[5])
+                               temperature=result[3], minUntilDry=result[4], isDry=result[5], timestamp=result[6])
 
     def getList(self, plant: int, limit: int, mode: str = "all") -> list[measurement]:
         """
@@ -237,8 +257,8 @@ class DBAdapterMeasurement(DBAdapter):
         :type limit: int
         :param mode:
             Sets the mode which measurements are returned: \n
-            - [archived]: Only archived measurements.
-            - [current]: Only non-archived (minUntilDry = -1) measurements.
+            - [archived]: Only archived.
+            - [current]: Only non-archived (minUntilDry = -1), non dry measurements.
             - [all]: All saved measurements.
         :type mode: str
 
@@ -250,7 +270,7 @@ class DBAdapterMeasurement(DBAdapter):
         if mode == "archived":
             whereClause = "AND minUntilDry != '-1'"
         elif mode == "current":
-            whereClause = "AND minUntilDry = '-1'"
+            whereClause = "AND minUntilDry = '-1' AND isDry = 0"
         elif mode == "all":
             whereClause = ""
 
@@ -269,7 +289,7 @@ class DBAdapterMeasurement(DBAdapter):
         for result in fetchall(query, values):
             allMeasurements.append(
                 measurement(measureId=result[0],plantId=result[1], moisture=result[2], 
-                            temperature=result[3], minUntilDry=result[4], timestamp=result[5]))
+                            temperature=result[3], minUntilDry=result[4], isDry=result[5], timestamp=result[6]))
         return allMeasurements
     
     def exists(self) -> int:
@@ -284,8 +304,8 @@ class DBAdapterMeasurement(DBAdapter):
         return result[0]
 
     def insert(self, data: measurement):
-        query = "INSERT INTO measurements (plantId, moisture, temperature, minUntilDry, timestamp) VALUES (?, ?, ?, ?, ?)"
-        values = (data.plantId, data.moisture, data.temperature, data.minUntilDry, data.timestamp)
+        query = "INSERT INTO measurements (plantId, moisture, temperature, minUntilDry, isDry, timestamp) VALUES (?, ?, ?, ?, ?, ?)"
+        values = (data.plantId, data.moisture, data.temperature, data.minUntilDry, data.isDry, data.timestamp)
         execute(query, values)
 
     def update(self, id: int, min: int):
