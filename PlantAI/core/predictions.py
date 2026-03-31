@@ -17,14 +17,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.pipeline import Pipeline
 from database.adapter import DBAdapterMeasurement
-from system.streams import importConfigFromYAML
-
-# Configuration
-stream = importConfigFromYAML()
-config = stream["core"]["predictions"]
-
-# Constants
-SCATTER = config["createScatter"]
 
 # Global DBAdapter
 dbAdapter: DBAdapterMeasurement = None
@@ -46,7 +38,7 @@ def trainModel(plantId: int):
     :type plantId: int
     """
     # Fill lists with archived measurements (2880 = 1 month)
-    listMinUntilDry = []; listMoisture = []; listIsDry = []
+    listMinUntilDry = []; listMoisture = []; listTemperature = []; listIsDry = []
     allMeasurements = dbAdapter.getList(plantId, 2880, "archived")
 
     # Skip training if no archived measurements are returned
@@ -54,12 +46,14 @@ def trainModel(plantId: int):
         for measurement in allMeasurements:
             listMinUntilDry.append(measurement.minUntilDry)
             listMoisture.append(measurement.moisture)
+            listTemperature.append(measurement.temperature)
             listIsDry.append(measurement.isDry)
 
         # Create dictionary from lists
         data = {
             'minUntilDry': listMinUntilDry,
             'moisture': listMoisture,
+            'temperature': listTemperature,
             'isDry': listIsDry
         }
 
@@ -73,16 +67,12 @@ def trainModel(plantId: int):
             .apply(rollingSlope, raw=True)
         )
 
-        # Calculate relative moisture
-        df["moistureRelative"] = df["moisture"] / df["moisture"].rolling(100).max()
+        # Calculate normalised moisture
+        df["moistureNormalised"] = df["moisture"] / df["moisture"].rolling(100).max()
 
         # Prepare features and target
-        X = df[['moisture', 'moistureSlope', 'moistureRelative', 'isDry']]
+        X = df[['moisture', 'moistureSlope', 'moistureNormalised', 'temperature', 'isDry']]
         y = df['minUntilDry']
-
-        # Save DataFrame as png
-        if (SCATTER):
-            plot(df)
 
         # Split training and test data (80/20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2)
@@ -145,6 +135,7 @@ def predictTimeUntilDry(plantId: int) -> int:
     measurements = dbAdapter.getList(plantId, 100, "all")
     moistureArray = np.array([msr.moisture for msr in measurements])
     curMoisture = measurements[-1].moisture
+    curTemperature = measurements[-1].temperature
     curIsDry = measurements[-1].isDry
 
     if curIsDry:
@@ -156,16 +147,17 @@ def predictTimeUntilDry(plantId: int) -> int:
         # Calculate moisture slope
         moistureSlope = rollingSlope(moistureArray[-10:])
 
-        # Calculate relative moisture
+        # Calculate normalised moisture
         dfr = pd.DataFrame({"moisture": moistureArray})
-        dfr["moistureRelative"] = dfr["moisture"] / dfr["moisture"].rolling(100).max()
-        moistureRelative = dfr.iloc[-1]["moistureRelative"]
+        dfr["moistureNormalised"] = dfr["moisture"] / dfr["moisture"].rolling(100).max()
+        moistureNormalised = dfr.iloc[-1]["moistureNormalised"]
 
         # Build dataframe
         df = pd.DataFrame({
             "moisture": [curMoisture],
             "moistureSlope": [moistureSlope],
-            "moistureRelative": [moistureRelative],
+            "moistureNormalised": [moistureNormalised],
+            "temperature": [curTemperature],
             "isDry": [curIsDry]
             })
 
@@ -183,7 +175,7 @@ def predictTimeUntilDry(plantId: int) -> int:
         hours = round(time.seconds / 3600)
 
         # Log and return result
-        logging.info(f"Plant {plantId} - {curMoisture}% moisture, {round(moistureSlope, 2)} slope, {round(moistureRelative, 2)} relative moisture")
+        logging.info(f"Plant {plantId} - {curMoisture}% moisture, {round(moistureSlope, 2)} slope, {round(moistureNormalised, 2)} normalised moisture, {curTemperature} °C temperature")
         logging.info(f"Prediction {prediction[0]}min - Water in {days} days and {hours} hours.")
         return days, hours
 
